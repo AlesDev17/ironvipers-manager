@@ -1,0 +1,45 @@
+from __future__ import annotations
+
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    MECHANIC = "MECHANIC"
+
+
+class OrderStatus(str, Enum):
+    RECIBIDA = "RECIBIDA"
+    EN_DIAGNOSTICO = "EN_DIAGNOSTICO"
+    ESPERANDO_AUTORIZACION = "ESPERANDO_AUTORIZACION"
+    AUTORIZADA = "AUTORIZADA"
+    EN_REPARACION = "EN_REPARACION"
+    ESPERANDO_PIEZAS = "ESPERANDO_PIEZAS"
+    LISTA_PARA_ENTREGA = "LISTA_PARA_ENTREGA"
+    ENTREGADA = "ENTREGADA"
+    CANCELADA = "CANCELADA"
+
+
+class PaymentMethod(str, Enum):
+    EFECTIVO = "EFECTIVO"
+    TRANSFERENCIA = "TRANSFERENCIA"
+    TARJETA = "TARJETA"
+    MIXTO = "MIXTO"
+
+
+class PhotoType(str, Enum):
+    RECEPCION = "RECEPCION"
+    DANO = "DANO"
+    DIAGNOSTICO = "DIAGNOSTICO"
+    AVANCE = "AVANCE"
+    ENTREGA = "ENTREGA"
+
+
+class ExpenseCategory(str, Enum):
+    RENTA = "RENTA"
+    LUZ = "LUZ"
+    AGUA = "AGUA"
+    HERRAMIENTA = "HERRAMIENTA"
+    PIEZAS = "PIEZAS"
+    NOMINA = "NOMINA"
+    OTRO = "OTRO"
