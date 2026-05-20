@@ -168,6 +168,7 @@ export default function ServiceOrderDetailPage() {
   const qc = useQueryClient()
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [showPartForm, setShowPartForm] = useState(false)
+  const [confirmStatus, setConfirmStatus] = useState<OrderStatus | null>(null)
 
   const { data: order, isLoading: loadingOrder } = useQuery({
     queryKey: ['service-orders', id],
@@ -256,7 +257,6 @@ export default function ServiceOrderDetailPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['service-orders', id] })
-      alert('Orden actualizada correctamente.')
     },
     onError: () => alert('Error al actualizar la orden.'),
   })
@@ -401,22 +401,39 @@ export default function ServiceOrderDetailPage() {
               <div className="flex flex-col gap-2 flex-shrink-0">
                 <p className="text-xs text-gray-500 font-medium uppercase">Cambiar a</p>
                 {nextStatuses.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => {
-                      if (confirm(`¿Cambiar estatus a "${STATUS_LABELS[s]}"?`)) {
-                        statusMutation.mutate(s)
-                      }
-                    }}
-                    disabled={statusMutation.isPending}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50 transition-all ${
-                      s === 'CANCELADA'
-                        ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
-                        : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                    }`}
-                  >
-                    {STATUS_LABELS[s]}
-                  </button>
+                  <div key={s}>
+                    {confirmStatus === s ? (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-700 border border-surface-500 rounded-lg">
+                        <span className="text-xs text-gray-300 mr-1">¿Confirmar?</span>
+                        <button
+                          onClick={() => { statusMutation.mutate(s); setConfirmStatus(null) }}
+                          disabled={statusMutation.isPending}
+                          className="text-xs font-semibold text-green-400 hover:text-green-300 transition-colors disabled:opacity-50"
+                        >
+                          Sí
+                        </button>
+                        <span className="text-gray-600">·</span>
+                        <button
+                          onClick={() => setConfirmStatus(null)}
+                          className="text-xs font-semibold text-gray-400 hover:text-gray-200 transition-colors"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmStatus(s)}
+                        disabled={statusMutation.isPending}
+                        className={`w-full px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50 transition-all ${
+                          s === 'CANCELADA'
+                            ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20'
+                            : 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                        }`}
+                      >
+                        {STATUS_LABELS[s]}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
