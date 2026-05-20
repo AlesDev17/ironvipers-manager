@@ -19,7 +19,7 @@ from app.shared.dependencies import get_current_user
 router = APIRouter(prefix="/service-orders", tags=["service-orders"])
 
 
-@router.get("/", response_model=list[ServiceOrderResponse])
+@router.get("", response_model=list[ServiceOrderResponse])
 def list_orders(
     db: Session = Depends(get_db),
     _: object = Depends(get_current_user),
@@ -27,7 +27,7 @@ def list_orders(
     return ServiceOrderService(db).list_orders()
 
 
-@router.post("/", response_model=ServiceOrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ServiceOrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(
     data: ServiceOrderCreate,
     db: Session = Depends(get_db),

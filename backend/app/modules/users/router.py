@@ -13,7 +13,7 @@ from app.shared.dependencies import require_admin
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("", response_model=list[UserResponse])
 def list_users(
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
@@ -21,7 +21,7 @@ def list_users(
     return UserService(db).list_users()
 
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(
     data: UserCreate,
     db: Session = Depends(get_db),

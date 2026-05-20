@@ -17,7 +17,7 @@ from app.shared.dependencies import get_current_user, require_admin
 router = APIRouter(prefix="/motorcycles", tags=["motorcycles"])
 
 
-@router.get("/", response_model=list[MotorcycleResponse])
+@router.get("", response_model=list[MotorcycleResponse])
 def list_motorcycles(
     db: Session = Depends(get_db),
     _: object = Depends(get_current_user),
@@ -25,7 +25,7 @@ def list_motorcycles(
     return MotorcycleService(db).list_motorcycles()
 
 
-@router.post("/", response_model=MotorcycleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=MotorcycleResponse, status_code=status.HTTP_201_CREATED)
 def create_motorcycle(
     data: MotorcycleCreate,
     db: Session = Depends(get_db),
