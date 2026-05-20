@@ -524,7 +524,7 @@ export default function ServiceOrderDetailPage() {
                     <td className="text-gray-100">{op.part?.name ?? op.part_id}</td>
                     <td className="text-gray-400 text-right">{op.quantity}</td>
                     <td className="text-gray-400 text-right">{formatCurrency(op.unit_price)}</td>
-                    <td className="text-gray-100 font-medium text-right">{formatCurrency(op.subtotal)}</td>
+                    <td className="text-gray-100 font-medium text-right">{formatCurrency(op.total_price)}</td>
                   </tr>
                 ))}
               </tbody>

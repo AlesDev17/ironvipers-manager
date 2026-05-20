@@ -112,7 +112,7 @@ export interface ServiceOrderPart {
   part_id: string
   quantity: number
   unit_price: string
-  subtotal: string
+  total_price: string
   part?: Part
 }
 

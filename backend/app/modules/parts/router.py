@@ -65,6 +65,15 @@ def delete_part(
     PartService(db).delete_part(part_id)
 
 
+@order_parts_router.get("/{order_id}/parts", response_model=list[ServiceOrderPartResponse])
+def list_parts_by_order(
+    order_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: object = Depends(get_current_user),
+):
+    return PartService(db).list_parts_by_order(order_id, db)
+
+
 @order_parts_router.post(
     "/{order_id}/parts",
     response_model=ServiceOrderPartResponse,
