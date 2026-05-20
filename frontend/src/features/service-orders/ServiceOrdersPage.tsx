@@ -103,7 +103,14 @@ export default function ServiceOrdersPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: ServiceOrderFormData) => {
-      const res = await api.post<ServiceOrder>('/service-orders', data)
+      const payload = {
+        ...data,
+        assigned_mechanic_id: data.assigned_mechanic_id || null,
+        estimated_delivery_date: data.estimated_delivery_date
+          ? new Date(data.estimated_delivery_date).toISOString()
+          : null,
+      }
+      const res = await api.post<ServiceOrder>('/service-orders', payload)
       return res.data
     },
     onSuccess: () => {
