@@ -27,6 +27,16 @@ const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   OTRO: 'Otro',
 }
 
+const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  RENTA: 'bg-blue-500/10 text-blue-300 border border-blue-500/20',
+  LUZ: 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/20',
+  AGUA: 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20',
+  HERRAMIENTA: 'bg-orange-500/10 text-orange-300 border border-orange-500/20',
+  PIEZAS: 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20',
+  NOMINA: 'bg-green-500/10 text-green-300 border border-green-500/20',
+  OTRO: 'bg-gray-500/10 text-gray-400 border border-gray-500/20',
+}
+
 const expenseSchema = z.object({
   concept: z.string().min(1, 'El concepto es requerido'),
   amount: z.coerce.number().positive('El monto debe ser positivo'),
@@ -37,10 +47,9 @@ const expenseSchema = z.object({
 
 type ExpenseFormData = z.infer<typeof expenseSchema>
 
-function formatCurrency(value: string): string {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
-    parseFloat(value)
-  )
+function formatCurrency(value: string | number): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num)
 }
 
 interface ModalProps {
@@ -51,12 +60,17 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ×
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card max-w-lg">
+        <div className="modal-header">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-surface-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
@@ -93,40 +107,37 @@ function ExpenseForm({ defaultValues, onSubmit, onCancel, isLoading }: ExpenseFo
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Concepto <span className="text-red-500">*</span>
+        <label className="label-dark">
+          Concepto <span className="text-red-400">*</span>
         </label>
         <input
           type="text"
           {...register('concept')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          className="input-dark"
           placeholder="Descripción del gasto"
         />
-        {errors.concept && <p className="mt-1 text-sm text-red-600">{errors.concept.message}</p>}
+        {errors.concept && <p className="alert-error-field">{errors.concept.message}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Monto ($) <span className="text-red-500">*</span>
+          <label className="label-dark">
+            Monto ($) <span className="text-red-400">*</span>
           </label>
           <input
             type="number"
             step="0.01"
             min="0.01"
             {...register('amount')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            className="input-dark"
           />
-          {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount.message}</p>}
+          {errors.amount && <p className="alert-error-field">{errors.amount.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Categoría <span className="text-red-500">*</span>
+          <label className="label-dark">
+            Categoría <span className="text-red-400">*</span>
           </label>
-          <select
-            {...register('category')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          >
+          <select {...register('category')} className="select-dark">
             {EXPENSE_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
                 {CATEGORY_LABELS[cat]}
@@ -137,42 +148,39 @@ function ExpenseForm({ defaultValues, onSubmit, onCancel, isLoading }: ExpenseFo
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Fecha <span className="text-red-500">*</span>
+        <label className="label-dark">
+          Fecha <span className="text-red-400">*</span>
         </label>
         <input
           type="date"
           {...register('expense_date')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          className="input-dark"
         />
-        {errors.expense_date && (
-          <p className="mt-1 text-sm text-red-600">{errors.expense_date.message}</p>
-        )}
+        {errors.expense_date && <p className="alert-error-field">{errors.expense_date.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+        <label className="label-dark">Notas</label>
         <textarea
           {...register('notes')}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+          className="textarea-dark"
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
+      <div className="flex justify-end gap-3 pt-2 border-t border-surface-600">
+        <button type="button" onClick={onCancel} className="btn-secondary">
           Cancelar
         </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-60 rounded-lg"
-        >
-          {isLoading ? 'Guardando...' : 'Guardar'}
+        <button type="submit" disabled={isLoading} className="btn-primary">
+          {isLoading ? (
+            <>
+              <div className="h-3.5 w-3.5 border-2 border-surface-900/30 border-t-surface-900 rounded-full animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            'Guardar'
+          )}
         </button>
       </div>
     </form>
@@ -232,13 +240,51 @@ export default function ExpensesPage() {
 
   const totalFiltered = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0)
 
+  // Breakdown by category for "ALL" view
+  const categoryTotals = EXPENSE_CATEGORIES.map((cat) => ({
+    cat,
+    total: expenses.filter((e) => e.category === cat).reduce((s, e) => s + parseFloat(e.amount), 0),
+    count: expenses.filter((e) => e.category === cat).length,
+  })).filter((ct) => ct.count > 0)
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeIn">
+      {/* Summary strip */}
+      {filtered.length > 0 && (
+        <div className="card px-6 py-4 flex items-center justify-between">
+          <span className="text-sm text-gray-400">
+            Total de {filtered.length} gasto{filtered.length !== 1 ? 's' : ''}
+            {categoryFilter !== 'ALL' ? ` en ${CATEGORY_LABELS[categoryFilter]}` : ''}
+          </span>
+          <span className="text-xl font-bold text-white tabular-nums">
+            {formatCurrency(totalFiltered)}
+          </span>
+        </div>
+      )}
+
+      {/* Category breakdown chips (only when ALL) */}
+      {categoryFilter === 'ALL' && categoryTotals.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {categoryTotals.map(({ cat, total, count }) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border hover:opacity-80 ${CATEGORY_COLORS[cat]}`}
+            >
+              {CATEGORY_LABELS[cat]}
+              <span className="opacity-70">({count})</span>
+              <span className="font-bold">{formatCurrency(total)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value as ExpenseCategory | 'ALL')}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          className="select-dark sm:w-56"
         >
           <option value="ALL">Todas las categorías</option>
           {EXPENSE_CATEGORIES.map((cat) => (
@@ -248,68 +294,66 @@ export default function ExpensesPage() {
           ))}
         </select>
         <div className="flex-1" />
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
-        >
-          + Nuevo Gasto
+        {categoryFilter !== 'ALL' && (
+          <button
+            onClick={() => setCategoryFilter('ALL')}
+            className="btn-ghost text-xs text-amber-400"
+          >
+            ← Ver todas
+          </button>
+        )}
+        <button onClick={() => setShowCreateModal(true)} className="btn-primary flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nuevo Gasto
         </button>
       </div>
 
-      {/* Summary */}
-      {filtered.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-100 shadow-sm px-6 py-3 flex items-center justify-between">
-          <span className="text-sm text-gray-600">
-            Total ({filtered.length} gasto{filtered.length !== 1 ? 's' : ''})
-          </span>
-          <span className="text-lg font-bold text-gray-900">
-            {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
-              totalFiltered
-            )}
-          </span>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Table */}
+      <div className="card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">No hay gastos registrados.</div>
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+            </svg>
+            <p className="font-medium text-sm">No hay gastos registrados.</p>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Concepto</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Categoría</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Monto</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Notas</th>
-                <th className="px-6 py-3" />
+                <th>Concepto</th>
+                <th>Categoría</th>
+                <th>Fecha</th>
+                <th className="text-right">Monto</th>
+                <th>Notas</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((expense, idx) => (
-                <tr key={expense.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  <td className="px-6 py-3 font-medium text-gray-900">{expense.concept}</td>
-                  <td className="px-6 py-3">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+            <tbody>
+              {filtered.map((expense) => (
+                <tr key={expense.id}>
+                  <td className="font-medium text-gray-100">{expense.concept}</td>
+                  <td>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[expense.category]}`}>
                       {CATEGORY_LABELS[expense.category]}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-gray-600">
+                  <td className="text-gray-400">
                     {new Date(expense.expense_date).toLocaleDateString('es-MX')}
                   </td>
-                  <td className="px-6 py-3 text-right font-semibold text-gray-900">
+                  <td className="text-right font-semibold text-gray-100 tabular-nums">
                     {formatCurrency(expense.amount)}
                   </td>
-                  <td className="px-6 py-3 text-gray-500 text-xs max-w-xs truncate">
-                    {expense.notes ?? '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="text-gray-500 text-xs max-w-xs truncate">{expense.notes ?? '—'}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setEditingExpense(expense)}
-                        className="text-gray-500 hover:text-primary-600 text-xs font-medium px-2 py-1 rounded hover:bg-primary-50"
+                        className="btn-ghost"
                       >
                         Editar
                       </button>
@@ -318,7 +362,7 @@ export default function ExpensesPage() {
                           if (confirm(`¿Eliminar el gasto "${expense.concept}"?`))
                             deleteMutation.mutate(expense.id)
                         }}
-                        className="text-gray-500 hover:text-red-600 text-xs font-medium px-2 py-1 rounded hover:bg-red-50"
+                        className="btn-danger-ghost"
                       >
                         Eliminar
                       </button>
@@ -345,9 +389,7 @@ export default function ExpensesPage() {
         <Modal title="Editar Gasto" onClose={() => setEditingExpense(null)}>
           <ExpenseForm
             defaultValues={editingExpense}
-            onSubmit={async (data) =>
-              updateMutation.mutateAsync({ id: editingExpense.id, data })
-            }
+            onSubmit={async (data) => updateMutation.mutateAsync({ id: editingExpense.id, data })}
             onCancel={() => setEditingExpense(null)}
             isLoading={updateMutation.isPending}
           />
