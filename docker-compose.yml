@@ -3,7 +3,7 @@ services:
     build: ./backend
     container_name: ironvipers_api
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     env_file:
       - ./backend/.env
     environment:
@@ -18,7 +18,7 @@ services:
     image: postgres:16
     container_name: ironvipers_db
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: iron_vipers_db
       POSTGRES_USER: ironvipers
@@ -35,7 +35,7 @@ services:
     image: dpage/pgadmin4
     container_name: ironvipers_pgadmin
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@ironvipers.com
       PGADMIN_DEFAULT_PASSWORD: admin
