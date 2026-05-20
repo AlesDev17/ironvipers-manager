@@ -39,84 +39,81 @@ export default function ClientForm({ defaultValues, onSubmit, onCancel, isLoadin
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nombre completo <span className="text-red-500">*</span>
+        <label className="label-dark">
+          Nombre completo <span className="text-red-400">*</span>
         </label>
         <input
           type="text"
           {...register('full_name')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="input-dark"
           placeholder="Juan Pérez"
         />
         {errors.full_name && (
-          <p className="mt-1 text-sm text-red-600">{errors.full_name.message}</p>
+          <p className="alert-error-field">{errors.full_name.message}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Teléfono <span className="text-red-500">*</span>
+        <label className="label-dark">
+          Teléfono <span className="text-red-400">*</span>
         </label>
         <input
           type="tel"
           {...register('phone')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="input-dark"
           placeholder="555-123-4567"
         />
         {errors.phone && (
-          <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+          <p className="alert-error-field">{errors.phone.message}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Correo electrónico
-        </label>
+        <label className="label-dark">Correo electrónico</label>
         <input
           type="email"
           {...register('email')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="input-dark"
           placeholder="correo@ejemplo.com"
         />
         {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          <p className="alert-error-field">{errors.email.message}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+        <label className="label-dark">Dirección</label>
         <input
           type="text"
           {...register('address')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="input-dark"
           placeholder="Calle, Colonia, Ciudad"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+        <label className="label-dark">Notas</label>
         <textarea
           {...register('notes')}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+          className="textarea-dark"
           placeholder="Observaciones adicionales..."
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-        >
+      <div className="flex justify-end gap-3 pt-2 border-t border-surface-600">
+        <button type="button" onClick={onCancel} className="btn-secondary">
           Cancelar
         </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-60 rounded-lg transition"
-        >
-          {isLoading ? 'Guardando...' : 'Guardar'}
+        <button type="submit" disabled={isLoading} className="btn-primary">
+          {isLoading ? (
+            <>
+              <div className="h-3.5 w-3.5 border-2 border-surface-900/30 border-t-surface-900 rounded-full animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            'Guardar'
+          )}
         </button>
       </div>
     </form>

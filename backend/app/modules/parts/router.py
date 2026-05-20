@@ -20,7 +20,7 @@ parts_router = APIRouter(prefix="/parts", tags=["parts"])
 order_parts_router = APIRouter(prefix="/service-orders", tags=["parts"])
 
 
-@parts_router.get("/", response_model=list[PartResponse])
+@parts_router.get("", response_model=list[PartResponse])
 def list_parts(
     db: Session = Depends(get_db),
     _: object = Depends(get_current_user),
@@ -28,7 +28,7 @@ def list_parts(
     return PartService(db).list_parts()
 
 
-@parts_router.post("/", response_model=PartResponse, status_code=status.HTTP_201_CREATED)
+@parts_router.post("", response_model=PartResponse, status_code=status.HTTP_201_CREATED)
 def create_part(
     data: PartCreate,
     db: Session = Depends(get_db),

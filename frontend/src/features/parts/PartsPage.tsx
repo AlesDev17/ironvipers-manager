@@ -1,24 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import api from '../../lib/api'
 import { Part } from '../../types'
+import PartForm, { PartFormData } from './PartForm'
 import LoadingSpinner from '../../components/LoadingSpinner'
-
-const partSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
-  sku: z.string().optional(),
-  brand: z.string().optional(),
-  description: z.string().optional(),
-  stock_quantity: z.coerce.number().int().min(0),
-  unit_cost: z.coerce.number().min(0),
-  sale_price: z.coerce.number().min(0),
-  minimum_stock: z.coerce.number().int().min(0),
-})
-
-type PartFormData = z.infer<typeof partSchema>
 
 function formatCurrency(value: string): string {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
@@ -34,12 +19,17 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ×
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card max-w-lg">
+        <div className="modal-header">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-surface-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
@@ -48,144 +38,11 @@ function Modal({ title, onClose, children }: ModalProps) {
   )
 }
 
-interface PartFormProps {
-  defaultValues?: Partial<Part>
-  onSubmit: (data: PartFormData) => Promise<unknown>
-  onCancel: () => void
-  isLoading?: boolean
-}
-
-function PartForm({ defaultValues, onSubmit, onCancel, isLoading }: PartFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PartFormData>({
-    resolver: zodResolver(partSchema),
-    defaultValues: {
-      name: defaultValues?.name ?? '',
-      sku: defaultValues?.sku ?? '',
-      brand: defaultValues?.brand ?? '',
-      description: defaultValues?.description ?? '',
-      stock_quantity: defaultValues?.stock_quantity ?? 0,
-      unit_cost: defaultValues ? parseFloat(defaultValues.unit_cost ?? '0') : 0,
-      sale_price: defaultValues ? parseFloat(defaultValues.sale_price ?? '0') : 0,
-      minimum_stock: defaultValues?.minimum_stock ?? 0,
-    },
-  })
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nombre <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          {...register('name')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-        />
-        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-          <input
-            type="text"
-            {...register('sku')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
-          <input
-            type="text"
-            {...register('brand')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-        <textarea
-          {...register('description')}
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm resize-none"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Costo unitario ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            {...register('unit_cost')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Precio venta ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            {...register('sale_price')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Stock actual</label>
-          <input
-            type="number"
-            min="0"
-            {...register('stock_quantity')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Stock mínimo</label>
-          <input
-            type="number"
-            min="0"
-            {...register('minimum_stock')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-60 rounded-lg"
-        >
-          {isLoading ? 'Guardando...' : 'Guardar'}
-        </button>
-      </div>
-    </form>
-  )
-}
-
 export default function PartsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingPart, setEditingPart] = useState<Part | null>(null)
-  const [lowStockOnly, setLowStockOnly] = useState(false)
 
   const { data: parts = [], isLoading } = useQuery({
     queryKey: ['parts'],
@@ -229,115 +86,118 @@ export default function PartsPage() {
 
   const filtered = parts.filter((p) => {
     const q = search.toLowerCase()
-    const matchesSearch =
+    return (
       p.name.toLowerCase().includes(q) ||
-      (p.sku ?? '').toLowerCase().includes(q) ||
-      (p.brand ?? '').toLowerCase().includes(q)
-    const matchesLowStock = !lowStockOnly || p.stock_quantity <= p.minimum_stock
-    return matchesSearch && matchesLowStock
+      (p.sku ?? '').toLowerCase().includes(q)
+    )
   })
 
-  const lowStockCount = parts.filter((p) => p.stock_quantity <= p.minimum_stock).length
+  const lowStockParts = filtered.filter(
+    (p) => p.minimum_stock != null && p.stock_quantity <= p.minimum_stock
+  )
+
+  const handleDelete = (part: Part) => {
+    if (confirm(`¿Eliminar la pieza "${part.name}"?`)) {
+      deleteMutation.mutate(part.id)
+    }
+  }
 
   return (
-    <div className="space-y-5">
-      {lowStockCount > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
-          <span className="text-red-500">⚠️</span>
-          <p className="text-sm text-red-700">
-            {lowStockCount} pieza{lowStockCount !== 1 ? 's' : ''} con stock bajo o agotado.
-          </p>
+    <div className="space-y-5 animate-fadeIn">
+      {/* Low stock banner */}
+      {lowStockParts.length > 0 && (
+        <div className="alert-danger">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p className="font-medium text-sm">
+              {lowStockParts.length} pieza{lowStockParts.length !== 1 ? 's' : ''} con stock bajo:{' '}
+              {lowStockParts.map((p) => p.name).join(', ')}
+            </p>
+          </div>
         </div>
       )}
 
+      {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre, SKU o marca..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-        />
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+        <div className="relative flex-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
           <input
-            type="checkbox"
-            checked={lowStockOnly}
-            onChange={(e) => setLowStockOnly(e.target.checked)}
-            className="accent-primary-600"
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre o SKU de parte..."
+            className="search-input pl-9"
           />
-          Solo bajo stock
-        </label>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
-        >
-          + Nueva Pieza
+        </div>
+        <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nueva Pieza
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Table */}
+      <div className="card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">
-            No se encontraron piezas.
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.501 19.795l.75-1.3m7.5-12.99l.75-1.3m-6.063 16.658l.26-1.477m2.605-14.772l.26-1.477m0 17.726l-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205L12 12m6.894 5.785l-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864l-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
+            </svg>
+            <p className="font-medium text-sm">{search ? 'No se encontraron piezas.' : 'No hay piezas registradas.'}</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Nombre</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">SKU</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Marca</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Stock</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase">P. Venta</th>
-                <th className="px-6 py-3" />
+                <th>Nombre</th>
+                <th>SKU</th>
+                <th className="text-right">Precio Venta</th>
+                <th className="text-right">Costo Compra</th>
+                <th className="text-right">Stock</th>
+                <th className="text-right">Mínimo</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((part, idx) => {
-                const isLow = part.stock_quantity <= part.minimum_stock
+            <tbody>
+              {filtered.map((part) => {
+                const isLow =
+                  part.minimum_stock != null && part.stock_quantity <= part.minimum_stock
                 return (
-                  <tr key={part.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                    <td className="px-6 py-3 font-medium text-gray-900">
-                      {part.name}
-                      {part.description && (
-                        <p className="text-xs text-gray-400 font-normal mt-0.5 truncate max-w-xs">
-                          {part.description}
-                        </p>
-                      )}
+                  <tr key={part.id}>
+                    <td className="font-medium text-gray-100">{part.name}</td>
+                    <td className="text-gray-500 font-mono text-xs">{part.sku ?? '—'}</td>
+                    <td className="text-gray-100 text-right tabular-nums">{formatCurrency(part.sale_price)}</td>
+                    <td className="text-gray-400 text-right tabular-nums">
+                      {part.unit_cost ? formatCurrency(part.unit_cost) : '—'}
                     </td>
-                    <td className="px-6 py-3 text-gray-500 font-mono text-xs">{part.sku ?? '—'}</td>
-                    <td className="px-6 py-3 text-gray-600">{part.brand ?? '—'}</td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="text-right tabular-nums">
                       <span
                         className={`font-semibold ${
-                          isLow ? 'text-red-600' : 'text-gray-900'
+                          isLow ? 'text-red-400' : 'text-gray-100'
                         }`}
                       >
                         {part.stock_quantity}
+                        {isLow && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 inline ml-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                          </svg>
+                        )}
                       </span>
-                      <span className="text-gray-400 text-xs ml-1">/ mín {part.minimum_stock}</span>
                     </td>
-                    <td className="px-6 py-3 text-right text-gray-900 font-medium">
-                      {formatCurrency(part.sale_price)}
+                    <td className="text-gray-500 text-right tabular-nums">
+                      {part.minimum_stock ?? '—'}
                     </td>
-                    <td className="px-6 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setEditingPart(part)}
-                          className="text-gray-500 hover:text-primary-600 text-xs font-medium px-2 py-1 rounded hover:bg-primary-50"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`¿Eliminar "${part.name}"?`)) deleteMutation.mutate(part.id)
-                          }}
-                          className="text-gray-500 hover:text-red-600 text-xs font-medium px-2 py-1 rounded hover:bg-red-50"
-                        >
-                          Eliminar
-                        </button>
+                    <td>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => setEditingPart(part)} className="btn-ghost">Editar</button>
+                        <button onClick={() => handleDelete(part)} className="btn-danger-ghost">Eliminar</button>
                       </div>
                     </td>
                   </tr>
@@ -348,8 +208,8 @@ export default function PartsPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400">
-        {filtered.length} pieza{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}
+      <p className="text-xs text-gray-500">
+        {filtered.length} pieza{filtered.length !== 1 ? 's' : ''} — {lowStockParts.length} con stock bajo
       </p>
 
       {showCreateModal && (

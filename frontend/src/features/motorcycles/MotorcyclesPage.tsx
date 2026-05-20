@@ -14,12 +14,17 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ×
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card max-w-2xl">
+        <div className="modal-header">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-surface-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
@@ -103,72 +108,66 @@ export default function MotorcyclesPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeIn">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por marca, modelo o placa..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-        />
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
-        >
-          + Nueva Motocicleta
+        <div className="relative flex-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por marca, modelo o placa..."
+            className="search-input pl-9"
+          />
+        </div>
+        <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nueva Motocicleta
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card overflow-hidden">
         {loadingMotos ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">
-            {search ? 'No se encontraron motocicletas.' : 'No hay motocicletas registradas.'}
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+            <p className="font-medium text-sm">{search ? 'No se encontraron motocicletas.' : 'No hay motocicletas registradas.'}</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Marca / Modelo</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Año</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Placa</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Cliente</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">KM</th>
-                <th className="px-6 py-3" />
+                <th>Marca / Modelo</th>
+                <th>Año</th>
+                <th>Placa</th>
+                <th>Cliente</th>
+                <th>KM</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((moto, idx) => (
-                <tr key={moto.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  <td className="px-6 py-3 font-medium text-gray-900">
-                    <Link to={`/motorcycles/${moto.id}`} className="hover:text-primary-600">
+            <tbody>
+              {filtered.map((moto) => (
+                <tr key={moto.id}>
+                  <td>
+                    <Link to={`/motorcycles/${moto.id}`} className="font-medium text-gray-100 hover:text-amber-400 transition-colors">
                       {moto.brand} {moto.model}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-gray-600">{moto.year}</td>
-                  <td className="px-6 py-3 text-gray-600">{moto.plate ?? '—'}</td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {clientMap.get(moto.client_id) ?? '—'}
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {moto.km !== undefined ? moto.km.toLocaleString('es-MX') : '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setEditingMoto(moto)}
-                        className="text-gray-500 hover:text-primary-600 text-xs font-medium px-2 py-1 rounded hover:bg-primary-50"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(moto)}
-                        className="text-gray-500 hover:text-red-600 text-xs font-medium px-2 py-1 rounded hover:bg-red-50"
-                      >
-                        Eliminar
-                      </button>
+                  <td className="text-gray-400">{moto.year}</td>
+                  <td className="text-gray-400">{moto.plate ?? '—'}</td>
+                  <td className="text-gray-400">{clientMap.get(moto.client_id) ?? '—'}</td>
+                  <td className="text-gray-400">{moto.km !== undefined ? moto.km.toLocaleString('es-MX') : '—'}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setEditingMoto(moto)} className="btn-ghost">Editar</button>
+                      <button onClick={() => handleDelete(moto)} className="btn-danger-ghost">Eliminar</button>
                     </div>
                   </td>
                 </tr>
@@ -178,7 +177,7 @@ export default function MotorcyclesPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         {filtered.length} motocicleta{filtered.length !== 1 ? 's' : ''} encontrada{filtered.length !== 1 ? 's' : ''}
       </p>
 

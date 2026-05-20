@@ -14,15 +14,17 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card max-w-lg">
+        <div className="modal-header">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-surface-700"
           >
-            ×
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
@@ -97,68 +99,78 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeIn">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre o teléfono..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-        />
+        <div className="relative flex-1">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre o teléfono..."
+            className="search-input pl-9"
+          />
+        </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
+          className="btn-primary"
         >
-          + Nuevo Cliente
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nuevo Cliente
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            {search ? 'No se encontraron clientes con ese criterio.' : 'No hay clientes registrados aún.'}
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+            <p className="font-medium text-sm">
+              {search ? 'No se encontraron clientes con ese criterio.' : 'No hay clientes registrados aún.'}
+            </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Teléfono</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Correo</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Registrado</th>
-                <th className="px-6 py-3" />
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Registrado</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((client, idx) => (
-                <tr key={client.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  <td className="px-6 py-3 font-medium text-gray-900">
-                    <Link to={`/clients/${client.id}`} className="hover:text-primary-600 transition-colors">
+            <tbody>
+              {filtered.map((client) => (
+                <tr key={client.id}>
+                  <td>
+                    <Link
+                      to={`/clients/${client.id}`}
+                      className="font-medium text-gray-100 hover:text-amber-400 transition-colors"
+                    >
                       {client.full_name}
                     </Link>
                   </td>
-                  <td className="px-6 py-3 text-gray-600">{client.phone}</td>
-                  <td className="px-6 py-3 text-gray-500">{client.email ?? '—'}</td>
-                  <td className="px-6 py-3 text-gray-500">
+                  <td className="text-gray-400">{client.phone}</td>
+                  <td className="text-gray-500">{client.email ?? '—'}</td>
+                  <td className="text-gray-500">
                     {new Date(client.created_at).toLocaleDateString('es-MX')}
                   </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setEditingClient(client)}
-                        className="text-gray-500 hover:text-primary-600 text-xs font-medium px-2 py-1 rounded hover:bg-primary-50 transition"
-                      >
+                  <td>
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setEditingClient(client)} className="btn-ghost">
                         Editar
                       </button>
-                      <button
-                        onClick={() => handleDelete(client)}
-                        className="text-gray-500 hover:text-red-600 text-xs font-medium px-2 py-1 rounded hover:bg-red-50 transition"
-                      >
+                      <button onClick={() => handleDelete(client)} className="btn-danger-ghost">
                         Eliminar
                       </button>
                     </div>
@@ -170,7 +182,7 @@ export default function ClientsPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         {filtered.length} cliente{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
       </p>
 

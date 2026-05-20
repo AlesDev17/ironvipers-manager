@@ -48,79 +48,93 @@ export default function MotorcycleDetailPage() {
 
   if (!motorcycle) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-6">
+      <div className="alert-danger">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
         Motocicleta no encontrada.
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl animate-fadeIn">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition"
+        className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-100 transition-colors"
       >
-        ← Volver
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Volver
       </button>
 
       {/* Moto card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              {motorcycle.brand} {motorcycle.model}
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">Año {motorcycle.year}</p>
+      <div className="card overflow-hidden">
+        <div className="px-6 py-5 bg-gradient-to-r from-surface-700 to-surface-800 border-b border-surface-600 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-amber-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">{motorcycle.brand} {motorcycle.model}</h2>
+              <p className="text-gray-400 text-sm mt-0.5">Año {motorcycle.year}</p>
+            </div>
           </div>
           <Link
-            to={`/service-orders`}
+            to="/service-orders"
             state={{ prefill_motorcycle_id: id }}
-            className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition"
+            className="btn-primary py-1.5 text-xs"
           >
-            + Nueva Orden
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nueva Orden
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 gap-5">
           {client && (
             <div>
-              <p className="text-xs text-gray-500 uppercase font-medium">Cliente</p>
-              <Link to={`/clients/${client.id}`} className="text-primary-600 hover:underline text-sm">
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Cliente</p>
+              <Link to={`/clients/${client.id}`} className="text-amber-400 hover:text-amber-300 text-sm transition-colors">
                 {client.full_name}
               </Link>
             </div>
           )}
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Placa</p>
-            <p className="text-gray-900 text-sm">{motorcycle.plate ?? '—'}</p>
+            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Placa</p>
+            <p className="text-gray-100 text-sm">{motorcycle.plate ?? '—'}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Color</p>
-            <p className="text-gray-900 text-sm">{motorcycle.color ?? '—'}</p>
+            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Color</p>
+            <p className="text-gray-100 text-sm">{motorcycle.color ?? '—'}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Kilometraje</p>
-            <p className="text-gray-900 text-sm">
+            <p className="text-xs text-gray-500 uppercase font-medium mb-1">Kilometraje</p>
+            <p className="text-gray-100 text-sm">
               {motorcycle.km !== undefined ? motorcycle.km.toLocaleString('es-MX') + ' km' : '—'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">VIN</p>
-            <p className="text-gray-900 text-sm font-mono">{motorcycle.vin ?? '—'}</p>
+            <p className="text-xs text-gray-500 uppercase font-medium mb-1">VIN</p>
+            <p className="text-gray-100 text-sm font-mono">{motorcycle.vin ?? '—'}</p>
           </div>
           {motorcycle.notes && (
             <div className="col-span-2 sm:col-span-3">
-              <p className="text-xs text-gray-500 uppercase font-medium">Notas</p>
-              <p className="text-gray-900 text-sm whitespace-pre-wrap">{motorcycle.notes}</p>
+              <p className="text-xs text-gray-500 uppercase font-medium mb-1">Notas</p>
+              <p className="text-gray-300 text-sm whitespace-pre-wrap">{motorcycle.notes}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Service orders */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800">Historial de Órdenes</h3>
+      <div className="card overflow-hidden">
+        <div className="card-header">
+          <h3 className="text-base font-semibold text-white">Historial de Órdenes</h3>
         </div>
 
         {loadingOrders ? (
@@ -130,44 +144,31 @@ export default function MotorcycleDetailPage() {
             No hay órdenes de servicio para esta motocicleta.
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">ID</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Estatus</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Entrada</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Saldo</th>
-                <th className="px-6 py-3" />
+                <th>ID</th>
+                <th>Estatus</th>
+                <th>Entrada</th>
+                <th>Total</th>
+                <th>Saldo</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {serviceOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50/50">
-                  <td className="px-6 py-3 font-mono text-gray-600 text-xs">
-                    #{order.id.slice(0, 8)}
-                  </td>
-                  <td className="px-6 py-3">
-                    <StatusBadge status={order.status} />
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {new Date(order.entry_date).toLocaleDateString('es-MX')}
-                  </td>
-                  <td className="px-6 py-3 text-gray-900 font-medium">
-                    {formatCurrency(order.total_cost)}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className={parseFloat(order.balance_due) > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
+                <tr key={order.id}>
+                  <td className="font-mono text-gray-500 text-xs">#{order.id.slice(0, 8)}</td>
+                  <td><StatusBadge status={order.status} /></td>
+                  <td className="text-gray-400">{new Date(order.entry_date).toLocaleDateString('es-MX')}</td>
+                  <td className="text-gray-100 font-medium">{formatCurrency(order.total_cost)}</td>
+                  <td>
+                    <span className={parseFloat(order.balance_due) > 0 ? 'text-red-400 font-medium' : 'text-green-400'}>
                       {formatCurrency(order.balance_due)}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    <Link
-                      to={`/service-orders/${order.id}`}
-                      className="text-primary-600 hover:text-primary-700 text-xs font-medium"
-                    >
-                      Ver →
-                    </Link>
+                  <td className="text-right">
+                    <Link to={`/service-orders/${order.id}`} className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors">Ver →</Link>
                   </td>
                 </tr>
               ))}

@@ -13,7 +13,7 @@ from app.shared.dependencies import require_admin
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
 
-@router.get("/", response_model=list[ExpenseResponse])
+@router.get("", response_model=list[ExpenseResponse])
 def list_expenses(
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
@@ -21,7 +21,7 @@ def list_expenses(
     return ExpenseService(db).list_expenses()
 
 
-@router.post("/", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
 def create_expense(
     data: ExpenseCreate,
     db: Session = Depends(get_db),

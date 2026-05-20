@@ -13,7 +13,7 @@ export default function LoadingSpinner({ size = 'md', className = '' }: LoadingS
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <div
-        className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-gray-200 border-t-primary-600`}
+        className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-surface-600 border-t-amber-500`}
         role="status"
         aria-label="Cargando..."
       />
@@ -23,8 +23,11 @@ export default function LoadingSpinner({ size = 'md', className = '' }: LoadingS
 
 export function FullPageSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <LoadingSpinner size="lg" />
+    <div className="min-h-screen flex items-center justify-center bg-surface-900">
+      <div className="flex flex-col items-center gap-4">
+        <LoadingSpinner size="lg" />
+        <p className="text-gray-400 text-sm font-medium">Cargando...</p>
+      </div>
     </div>
   )
 }

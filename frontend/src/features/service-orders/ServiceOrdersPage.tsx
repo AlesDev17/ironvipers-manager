@@ -33,18 +33,36 @@ interface ModalProps {
 
 function Modal({ title, onClose, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">
-            ×
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card max-w-2xl">
+        <div className="modal-header">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-surface-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   )
+}
+
+const statusLabels: Record<string, string> = {
+  ALL: 'Todos',
+  RECIBIDA: 'Recibida',
+  EN_DIAGNOSTICO: 'En Diagnóstico',
+  ESPERANDO_AUTORIZACION: 'Esp. Autorización',
+  AUTORIZADA: 'Autorizada',
+  EN_REPARACION: 'En Reparación',
+  ESPERANDO_PIEZAS: 'Esp. Piezas',
+  LISTA_PARA_ENTREGA: 'Lista p/ Entrega',
+  ENTREGADA: 'Entregada',
+  CANCELADA: 'Cancelada',
 }
 
 export default function ServiceOrdersPage() {
@@ -85,7 +103,14 @@ export default function ServiceOrdersPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: ServiceOrderFormData) => {
-      const res = await api.post<ServiceOrder>('/service-orders', data)
+      const payload = {
+        ...data,
+        assigned_mechanic_id: data.assigned_mechanic_id || null,
+        estimated_delivery_date: data.estimated_delivery_date
+          ? new Date(data.estimated_delivery_date).toISOString()
+          : null,
+      }
+      const res = await api.post<ServiceOrder>('/service-orders', payload)
       return res.data
     },
     onSuccess: () => {
@@ -97,103 +122,90 @@ export default function ServiceOrdersPage() {
 
   const filtered = orders.filter((o) => statusFilter === 'ALL' || o.status === statusFilter)
 
-  const statusLabels: Record<string, string> = {
-    ALL: 'Todos',
-    RECIBIDA: 'Recibida',
-    EN_DIAGNOSTICO: 'En Diagnóstico',
-    ESPERANDO_AUTORIZACION: 'Esp. Autorización',
-    AUTORIZADA: 'Autorizada',
-    EN_REPARACION: 'En Reparación',
-    ESPERANDO_PIEZAS: 'Esp. Piezas',
-    LISTA_PARA_ENTREGA: 'Lista p/ Entrega',
-    ENTREGADA: 'Entregada',
-    CANCELADA: 'Cancelada',
-  }
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeIn">
       {/* Filters + action */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex-1">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'ALL')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+        <div className="flex-1 flex flex-wrap gap-2">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+              statusFilter === 'ALL'
+                ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                : 'text-gray-400 border border-surface-600 hover:bg-surface-700 hover:text-gray-200'
+            }`}
           >
-            <option value="ALL">Todos los estatus</option>
-            {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {statusLabels[s]}
-              </option>
-            ))}
-          </select>
+            Todos ({orders.length})
+          </button>
+          {ALL_STATUSES.map((s) => {
+            const count = orders.filter((o) => o.status === s).length
+            if (count === 0) return null
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                  statusFilter === s
+                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    : 'text-gray-400 border border-surface-600 hover:bg-surface-700 hover:text-gray-200'
+                }`}
+              >
+                {statusLabels[s]} ({count})
+              </button>
+            )
+          })}
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition whitespace-nowrap"
-        >
-          + Nueva Orden
+        <button onClick={() => setShowCreateModal(true)} className="btn-primary flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Nueva Orden
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">
-            No hay órdenes de servicio con ese filtro.
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+            </svg>
+            <p className="font-medium text-sm">No hay órdenes de servicio con ese filtro.</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="table-dark">
+            <thead>
               <tr>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">ID</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Cliente</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Moto</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Estatus</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Entrada</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Saldo</th>
-                <th className="px-6 py-3" />
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Moto</th>
+                <th>Estatus</th>
+                <th>Entrada</th>
+                <th>Total</th>
+                <th>Saldo</th>
+                <th />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((order, idx) => (
-                <tr key={order.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  <td className="px-6 py-3 font-mono text-gray-500 text-xs">
-                    #{order.id.slice(0, 8)}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700">
-                    {clientMap.get(order.client_id) ?? '—'}
-                  </td>
-                  <td className="px-6 py-3 text-gray-700">
-                    {motoMap.get(order.motorcycle_id) ?? '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <StatusBadge status={order.status} />
-                  </td>
-                  <td className="px-6 py-3 text-gray-600">
-                    {new Date(order.entry_date).toLocaleDateString('es-MX')}
-                  </td>
-                  <td className="px-6 py-3 font-medium text-gray-900">
-                    {formatCurrency(order.total_cost)}
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={
-                        parseFloat(order.balance_due) > 0
-                          ? 'text-red-600 font-medium'
-                          : 'text-green-600'
-                      }
-                    >
+            <tbody>
+              {filtered.map((order) => (
+                <tr key={order.id}>
+                  <td className="font-mono text-gray-500 text-xs">#{order.id.slice(0, 8)}</td>
+                  <td className="text-gray-300">{clientMap.get(order.client_id) ?? '—'}</td>
+                  <td className="text-gray-300">{motoMap.get(order.motorcycle_id) ?? '—'}</td>
+                  <td><StatusBadge status={order.status} /></td>
+                  <td className="text-gray-400">{new Date(order.entry_date).toLocaleDateString('es-MX')}</td>
+                  <td className="font-medium text-gray-100">{formatCurrency(order.total_cost)}</td>
+                  <td>
+                    <span className={parseFloat(order.balance_due) > 0 ? 'text-red-400 font-medium' : 'text-green-400'}>
                       {formatCurrency(order.balance_due)}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-right">
+                  <td className="text-right">
                     <Link
                       to={`/service-orders/${order.id}`}
-                      className="text-primary-600 hover:text-primary-700 text-xs font-medium"
+                      className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors"
                     >
                       Ver →
                     </Link>
@@ -205,7 +217,7 @@ export default function ServiceOrdersPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         {filtered.length} orden{filtered.length !== 1 ? 'es' : ''} encontrada{filtered.length !== 1 ? 's' : ''}
       </p>
 
