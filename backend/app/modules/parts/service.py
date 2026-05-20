@@ -38,6 +38,10 @@ class PartService:
         part = self.get_part(part_id)
         self.repo.delete(part)
 
+    def list_parts_by_order(self, order_id: uuid.UUID, db: Session) -> list[ServiceOrderPart]:
+        sop_repo = ServiceOrderPartRepository(db)
+        return sop_repo.list_by_order(order_id)
+
     def add_part_to_order(
         self, order_id: uuid.UUID, data: AddPartToOrder, db: Session
     ) -> ServiceOrderPart:

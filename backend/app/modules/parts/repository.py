@@ -43,6 +43,10 @@ class ServiceOrderPartRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def list_by_order(self, order_id: uuid.UUID) -> list[ServiceOrderPart]:
+        stmt = select(ServiceOrderPart).where(ServiceOrderPart.service_order_id == order_id)
+        return list(self.db.execute(stmt).scalars().all())
+
     def create(self, sop: ServiceOrderPart) -> ServiceOrderPart:
         self.db.add(sop)
         self.db.commit()

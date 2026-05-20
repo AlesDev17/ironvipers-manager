@@ -59,3 +59,4 @@ class ServiceOrderPartResponse(BaseModel):
     quantity: int
     unit_price: Decimal
     total_price: Decimal
+    part: PartResponse | None = None
