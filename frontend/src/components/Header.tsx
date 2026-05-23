@@ -10,7 +10,11 @@ const pageTitles: Record<string, string> = {
   '/expenses': 'Gastos',
 }
 
-export default function Header() {
+interface HeaderProps {
+  onMenuToggle: () => void
+}
+
+export default function Header({ onMenuToggle }: HeaderProps) {
   const { pathname } = useLocation()
   const { user } = useAuth()
 
@@ -25,8 +29,18 @@ export default function Header() {
     .toUpperCase() ?? 'U'
 
   return (
-    <header className="bg-surface-800 border-b border-surface-600 px-6 py-3.5 flex items-center justify-between flex-shrink-0">
-      <div className="flex items-center gap-2">
+    <header className="bg-surface-800 border-b border-surface-600 px-4 md:px-6 py-3.5 flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-surface-700 transition-colors"
+          aria-label="Abrir menú"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
         <h1 className="text-lg font-semibold text-white">{title}</h1>
       </div>
       <div className="flex items-center gap-3">

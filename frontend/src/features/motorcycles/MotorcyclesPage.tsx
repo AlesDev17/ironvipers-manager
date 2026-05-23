@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { Motorcycle, Client } from '../../types'
 import MotorcycleForm, { MotorcycleFormData } from './MotorcycleForm'
@@ -36,6 +36,7 @@ function Modal({ title, onClose, children }: ModalProps) {
 export default function MotorcyclesPage() {
   const qc = useQueryClient()
   const location = useLocation()
+  const navigate = useNavigate()
   const prefillClientId = (location.state as { prefill_client_id?: string } | null)?.prefill_client_id
 
   const [search, setSearch] = useState('')
@@ -130,7 +131,50 @@ export default function MotorcyclesPage() {
         </button>
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {loadingMotos ? (
+          <LoadingSpinner size="md" className="py-12" />
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+            <p className="font-medium text-sm">{search ? 'No se encontraron motocicletas.' : 'No hay motocicletas registradas.'}</p>
+          </div>
+        ) : (
+          filtered.map((moto) => (
+            <div
+              key={moto.id}
+              onClick={() => navigate(`/motorcycles/${moto.id}`)}
+              className="card p-4 flex items-center gap-3 hover:bg-surface-700/60 active:bg-surface-700 transition-colors cursor-pointer"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-100 truncate">{moto.brand} {moto.model} {moto.year}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{clientMap.get(moto.client_id) ?? '—'}{moto.plate ? ` · ${moto.plate}` : ''}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{moto.km !== undefined ? `${moto.km.toLocaleString('es-MX')} km` : 'Sin km'}</p>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingMoto(moto) }}
+                  className="btn-ghost"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(moto) }}
+                  className="btn-danger-ghost"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block card overflow-hidden">
         {loadingMotos ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
@@ -154,9 +198,13 @@ export default function MotorcyclesPage() {
             </thead>
             <tbody>
               {filtered.map((moto) => (
-                <tr key={moto.id}>
+                <tr
+                  key={moto.id}
+                  onClick={() => navigate(`/motorcycles/${moto.id}`)}
+                  className="cursor-pointer hover:bg-surface-700/50 transition-colors"
+                >
                   <td>
-                    <Link to={`/motorcycles/${moto.id}`} className="font-medium text-gray-100 hover:text-amber-400 transition-colors">
+                    <Link to={`/motorcycles/${moto.id}`} className="font-medium text-gray-100 hover:text-amber-400 transition-colors" onClick={(e) => e.stopPropagation()}>
                       {moto.brand} {moto.model}
                     </Link>
                   </td>
@@ -166,8 +214,18 @@ export default function MotorcyclesPage() {
                   <td className="text-gray-400">{moto.km !== undefined ? moto.km.toLocaleString('es-MX') : '—'}</td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => setEditingMoto(moto)} className="btn-ghost">Editar</button>
-                      <button onClick={() => handleDelete(moto)} className="btn-danger-ghost">Eliminar</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingMoto(moto) }}
+                        className="btn-ghost"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(moto) }}
+                        className="btn-danger-ghost"
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </td>
                 </tr>

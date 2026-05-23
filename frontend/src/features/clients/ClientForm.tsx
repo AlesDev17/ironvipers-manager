@@ -2,13 +2,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Client } from '../../types'
+import { toTitleCase, toSentenceCase } from '../../lib/strings'
 
 const clientSchema = z.object({
-  full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  phone: z.string().min(7, 'El teléfono es requerido'),
+  full_name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').transform(toTitleCase),
+  phone: z.string().min(7, 'El teléfono es requerido').transform((s) => s.trim()),
   email: z.string().email('Correo inválido').optional().or(z.literal('')),
-  address: z.string().optional(),
-  notes: z.string().optional(),
+  address: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
+  notes: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
 })
 
 export type ClientFormData = z.infer<typeof clientSchema>

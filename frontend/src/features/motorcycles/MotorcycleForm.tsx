@@ -4,17 +4,18 @@ import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { Client, Motorcycle } from '../../types'
+import { toTitleCase, toSentenceCase } from '../../lib/strings'
 
 const motorcycleSchema = z.object({
   client_id: z.string().min(1, 'Selecciona un cliente'),
-  brand: z.string().min(1, 'La marca es requerida'),
-  model: z.string().min(1, 'El modelo es requerido'),
+  brand: z.string().min(1, 'La marca es requerida').transform(toTitleCase),
+  model: z.string().min(1, 'El modelo es requerido').transform(toTitleCase),
   year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
-  plate: z.string().optional(),
-  vin: z.string().optional(),
-  color: z.string().optional(),
+  plate: z.string().optional().transform((s) => s ? s.trim().toUpperCase() : s),
+  vin: z.string().optional().transform((s) => s ? s.trim().toUpperCase() : s),
+  color: z.string().optional().transform((s) => s ? toTitleCase(s) : s),
   km: z.coerce.number().int().min(0).optional(),
-  notes: z.string().optional(),
+  notes: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
 })
 
 export type MotorcycleFormData = z.infer<typeof motorcycleSchema>

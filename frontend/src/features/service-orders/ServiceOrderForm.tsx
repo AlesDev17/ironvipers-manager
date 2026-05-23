@@ -5,12 +5,13 @@ import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { Motorcycle, User, Client } from '../../types'
+import { toSentenceCase } from '../../lib/strings'
 
 const serviceOrderSchema = z.object({
   motorcycle_id: z.string().min(1, 'Selecciona una motocicleta'),
   client_id: z.string().min(1, 'El cliente es requerido'),
   assigned_mechanic_id: z.string().optional(),
-  problem_description: z.string().optional(),
+  problem_description: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
   estimated_delivery_date: z.string().optional(),
 })
 
