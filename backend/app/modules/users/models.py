@@ -34,3 +34,7 @@ class User(Base):
     )
 
     tenant: Mapped["Tenant | None"] = relationship("Tenant", back_populates="users")  # type: ignore[name-defined]
+
+    @property
+    def tenant_name(self) -> str | None:
+        return self.tenant.name if self.tenant else None

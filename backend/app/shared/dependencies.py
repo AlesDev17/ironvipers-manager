@@ -52,5 +52,10 @@ def require_mechanic_or_admin(current_user=Depends(get_current_user)):
 
 
 def get_current_tenant_id(current_user=Depends(get_current_user)) -> uuid.UUID | None:
-    """Returns the tenant_id of the logged-in user. None for SUPERADMIN."""
+    """Returns the tenant_id of the logged-in user. None for SUPERADMIN (sees all data).
+    Non-SUPERADMIN users without a tenant are blocked."""
+    if current_user.role == UserRole.SUPERADMIN:
+        return None
+    if current_user.tenant_id is None:
+        raise forbidden("Account is not assigned to a workshop")
     return current_user.tenant_id

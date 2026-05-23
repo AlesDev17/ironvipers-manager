@@ -8,6 +8,7 @@ const pageTitles: Record<string, string> = {
   '/service-orders': 'Órdenes de Servicio',
   '/parts': 'Piezas',
   '/expenses': 'Gastos',
+  '/superadmin': 'Talleres',
 }
 
 interface HeaderProps {
@@ -19,7 +20,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const { user } = useAuth()
 
   const base = '/' + pathname.split('/')[1]
-  const title = pageTitles[base] ?? 'Iron Vipers'
+  const title = pageTitles[base] ?? user?.tenant_name ?? 'Iron Vipers'
 
   const initials = user?.full_name
     ?.split(' ')

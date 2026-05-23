@@ -30,10 +30,12 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } }
-      setServerError(
-        axiosErr.response?.data?.detail ?? 'Error al iniciar sesión. Verifica tus credenciales.'
-      )
+      const detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+      if (detail === 'subscription_inactive' || detail === 'subscription_expired') {
+        setServerError(detail)
+      } else {
+        setServerError('credentials')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -148,12 +150,24 @@ export default function LoginPage() {
               </div>
 
               {/* Server error */}
-              {serverError && (
+              {serverError === 'subscription_inactive' && (
+                <div className="rounded-lg bg-orange-500/10 border border-orange-500/30 p-4 text-sm text-center space-y-1">
+                  <p className="font-semibold text-orange-400">Suscripción suspendida</p>
+                  <p className="text-gray-400">Tu cuenta fue desactivada. Contacta a soporte para reactivarla.</p>
+                </div>
+              )}
+              {serverError === 'subscription_expired' && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4 text-sm text-center space-y-1">
+                  <p className="font-semibold text-red-400">Suscripción vencida</p>
+                  <p className="text-gray-400">Tu suscripción expiró. Contacta a soporte para renovarla.</p>
+                </div>
+              )}
+              {serverError === 'credentials' && (
                 <div className="alert-danger text-sm">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 flex-shrink-0">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                   </svg>
-                  {serverError}
+                  Credenciales incorrectas. Verifica tu correo y contraseña.
                 </div>
               )}
 

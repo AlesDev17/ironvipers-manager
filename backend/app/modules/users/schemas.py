@@ -33,4 +33,5 @@ class UserResponse(BaseModel):
     phone: str | None
     role: UserRole
     is_active: bool
+    tenant_name: str | None = None
     created_at: datetime

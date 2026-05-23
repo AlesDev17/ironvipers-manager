@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
   createElement,
 } from 'react'
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     storeAuth(access_token, authUser)
     setToken(access_token)
     setUser(authUser)
-    navigate('/dashboard')
+    navigate(authUser.role === 'SUPERADMIN' ? '/superadmin/tenants' : '/dashboard')
   }, [navigate])
 
   const logout = useCallback(() => {
@@ -46,6 +47,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null)
     navigate('/login')
   }, [navigate])
+
+  // Poll /auth/me every 30s to detect deleted/deactivated accounts.
+  // The 401 interceptor in api.ts handles the redirect to /login automatically.
+  useEffect(() => {
+    if (!token) return
+    const id = setInterval(() => {
+      api.get('/auth/me').catch(() => {})
+    }, 30_000)
+    return () => clearInterval(id)
+  }, [token])
 
   const value: AuthContextValue = {
     user,

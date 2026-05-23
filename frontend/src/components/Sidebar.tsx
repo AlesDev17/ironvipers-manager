@@ -51,7 +51,7 @@ interface NavItem {
   icon: keyof typeof icons
 }
 
-const navItems: NavItem[] = [
+const workshopNavItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/clients', label: 'Clientes', icon: 'clients' },
   { to: '/motorcycles', label: 'Motocicletas', icon: 'motorcycles' },
@@ -60,8 +60,14 @@ const navItems: NavItem[] = [
   { to: '/expenses', label: 'Gastos', icon: 'expenses' },
 ]
 
+const superadminNavItems: NavItem[] = [
+  { to: '/superadmin/tenants', label: 'Talleres', icon: 'clients' },
+]
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
+  const isSuperadmin = user?.role === 'SUPERADMIN'
+  const navItems = isSuperadmin ? superadminNavItems : workshopNavItems
 
   const initials = user?.full_name
     ?.split(' ')
@@ -83,8 +89,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </svg>
         </div>
         <div>
-          <div className="text-white font-bold text-base leading-tight tracking-wide">Iron Vipers</div>
-          <div className="text-gray-400 text-xs font-medium">Taller de Motos</div>
+          <div className="text-white font-bold text-base leading-tight tracking-wide">
+            {isSuperadmin ? 'Iron Vipers' : (user?.tenant_name ?? 'Iron Vipers')}
+          </div>
+          <div className="text-gray-400 text-xs font-medium">
+            {isSuperadmin ? 'Panel de control' : 'Taller de Motos'}
+          </div>
         </div>
       </div>
 
@@ -118,7 +128,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate leading-tight">{user?.full_name}</p>
             <p className="text-gray-400 text-xs truncate">
-              {user?.role === 'ADMIN' ? 'Administrador' : 'Mecánico'}
+              {user?.role === 'SUPERADMIN' ? 'Superadmin' : user?.role === 'ADMIN' ? 'Administrador' : 'Mecánico'}
             </p>
           </div>
         </div>
