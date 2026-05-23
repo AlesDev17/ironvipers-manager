@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -29,6 +30,14 @@ def get_current_user(
     user = repo.get_by_id(user_id)
     if user is None or not user.is_active:
         raise unauthorized()
+
+    # Enforce tenant subscription on every request (not just login)
+    if user.role != UserRole.SUPERADMIN and user.tenant:
+        if not user.tenant.is_active:
+            raise forbidden("subscription_inactive")
+        if user.tenant.subscription_expires_at:
+            if user.tenant.subscription_expires_at < datetime.now(timezone.utc):
+                raise forbidden("subscription_expired")
 
     return user
 

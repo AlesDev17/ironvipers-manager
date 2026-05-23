@@ -15,11 +15,21 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const detail = error.response?.data?.detail
+
+    if (status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
       window.location.href = '/login'
     }
+
+    if (status === 403 && (detail === 'subscription_inactive' || detail === 'subscription_expired')) {
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('user')
+      window.location.href = `/login?blocked=${detail}`
+    }
+
     return Promise.reject(error)
   }
 )

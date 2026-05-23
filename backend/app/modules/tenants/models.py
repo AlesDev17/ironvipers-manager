@@ -23,4 +23,4 @@ class Tenant(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    users: Mapped[list] = relationship("User", back_populates="tenant")
+    users: Mapped[list] = relationship("User", back_populates="tenant", passive_deletes=True)

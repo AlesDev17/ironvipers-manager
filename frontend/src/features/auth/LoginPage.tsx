@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from './useAuth'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'El correo es requerido').email('Correo inválido'),
@@ -13,7 +14,9 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const { login } = useAuth()
-  const [serverError, setServerError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const blockedParam = searchParams.get('blocked')
+  const [serverError, setServerError] = useState<string | null>(blockedParam)
   const [isLoading, setIsLoading] = useState(false)
 
   const {
