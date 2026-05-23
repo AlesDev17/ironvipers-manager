@@ -15,12 +15,18 @@ class PartRepository:
     def get_by_id(self, part_id: uuid.UUID) -> Part | None:
         return self.db.get(Part, part_id)
 
-    def list_all(self) -> list[Part]:
-        stmt = select(Part).order_by(Part.name)
+    def list_all(self, tenant_id: uuid.UUID | None = None) -> list[Part]:
+        stmt = select(Part)
+        if tenant_id is not None:
+            stmt = stmt.where(Part.tenant_id == tenant_id)
+        stmt = stmt.order_by(Part.name)
         return list(self.db.execute(stmt).scalars().all())
 
-    def list_low_stock(self) -> list[Part]:
-        stmt = select(Part).where(Part.stock_quantity <= Part.minimum_stock).order_by(Part.name)
+    def list_low_stock(self, tenant_id: uuid.UUID | None = None) -> list[Part]:
+        stmt = select(Part).where(Part.stock_quantity <= Part.minimum_stock)
+        if tenant_id is not None:
+            stmt = stmt.where(Part.tenant_id == tenant_id)
+        stmt = stmt.order_by(Part.name)
         return list(self.db.execute(stmt).scalars().all())
 
     def create(self, part: Part) -> Part:

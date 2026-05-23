@@ -14,6 +14,9 @@ class ServiceOrder(Base):
     __tablename__ = "service_orders"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True
+    )
     motorcycle_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("motorcycles.id", ondelete="RESTRICT"), nullable=False
     )

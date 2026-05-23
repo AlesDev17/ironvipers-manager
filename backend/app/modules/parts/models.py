@@ -13,6 +13,9 @@ class Part(Base):
     __tablename__ = "parts"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     sku: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
     brand: Mapped[str | None] = mapped_column(String(100), nullable=True)

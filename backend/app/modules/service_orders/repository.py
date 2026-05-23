@@ -15,8 +15,11 @@ class ServiceOrderRepository:
     def get_by_id(self, order_id: uuid.UUID) -> ServiceOrder | None:
         return self.db.get(ServiceOrder, order_id)
 
-    def list_all(self) -> list[ServiceOrder]:
-        stmt = select(ServiceOrder).order_by(ServiceOrder.created_at.desc())
+    def list_all(self, tenant_id: uuid.UUID | None = None) -> list[ServiceOrder]:
+        stmt = select(ServiceOrder)
+        if tenant_id is not None:
+            stmt = stmt.where(ServiceOrder.tenant_id == tenant_id)
+        stmt = stmt.order_by(ServiceOrder.created_at.desc())
         return list(self.db.execute(stmt).scalars().all())
 
     def create(self, order: ServiceOrder) -> ServiceOrder:

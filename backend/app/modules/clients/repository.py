@@ -15,8 +15,11 @@ class ClientRepository:
     def get_by_id(self, client_id: uuid.UUID) -> Client | None:
         return self.db.get(Client, client_id)
 
-    def list_all(self) -> list[Client]:
-        stmt = select(Client).order_by(Client.created_at.desc())
+    def list_all(self, tenant_id: uuid.UUID | None = None) -> list[Client]:
+        stmt = select(Client)
+        if tenant_id is not None:
+            stmt = stmt.where(Client.tenant_id == tenant_id)
+        stmt = stmt.order_by(Client.created_at.desc())
         return list(self.db.execute(stmt).scalars().all())
 
     def create(self, client: Client) -> Client:

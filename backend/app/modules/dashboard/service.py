@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+import uuid
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -27,52 +28,79 @@ class DashboardService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def get_summary(self) -> DashboardSummary:
+    def get_summary(self, tenant_id: uuid.UUID | None = None) -> DashboardSummary:
         today = date.today()
         month_start = today.replace(day=1)
 
+        def _order_filter(stmt):
+            if tenant_id is not None:
+                stmt = stmt.where(ServiceOrder.tenant_id == tenant_id)
+            return stmt
+
+        def _payment_filter(stmt):
+            if tenant_id is not None:
+                stmt = stmt.where(Payment.tenant_id == tenant_id)
+            return stmt
+
+        def _part_filter(stmt):
+            if tenant_id is not None:
+                stmt = stmt.where(Part.tenant_id == tenant_id)
+            return stmt
+
         active_orders = self.db.execute(
-            select(func.count(ServiceOrder.id)).where(ServiceOrder.status.in_(_ACTIVE_STATUSES))
+            _order_filter(
+                select(func.count(ServiceOrder.id)).where(ServiceOrder.status.in_(_ACTIVE_STATUSES))
+            )
         ).scalar_one()
 
         completed_orders = self.db.execute(
-            select(func.count(ServiceOrder.id)).where(
-                ServiceOrder.status == OrderStatus.ENTREGADA
+            _order_filter(
+                select(func.count(ServiceOrder.id)).where(ServiceOrder.status == OrderStatus.ENTREGADA)
             )
         ).scalar_one()
 
         motorcycles_in_repair = self.db.execute(
-            select(func.count(ServiceOrder.id)).where(
-                ServiceOrder.status == OrderStatus.EN_REPARACION
+            _order_filter(
+                select(func.count(ServiceOrder.id)).where(ServiceOrder.status == OrderStatus.EN_REPARACION)
             )
         ).scalar_one()
 
         waiting_auth = self.db.execute(
-            select(func.count(ServiceOrder.id)).where(
-                ServiceOrder.status == OrderStatus.ESPERANDO_AUTORIZACION
+            _order_filter(
+                select(func.count(ServiceOrder.id)).where(
+                    ServiceOrder.status == OrderStatus.ESPERANDO_AUTORIZACION
+                )
             )
         ).scalar_one()
 
         todays_income = self.db.execute(
-            select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                func.date(Payment.payment_date) == today
+            _payment_filter(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    func.date(Payment.payment_date) == today
+                )
             )
         ).scalar_one()
 
         monthly_income = self.db.execute(
-            select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                func.date(Payment.payment_date) >= month_start
+            _payment_filter(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    func.date(Payment.payment_date) >= month_start
+                )
             )
         ).scalar_one()
 
         pending_total = self.db.execute(
-            select(func.coalesce(func.sum(ServiceOrder.balance_due), 0)).where(
-                ServiceOrder.balance_due > 0
+            _order_filter(
+                select(func.coalesce(func.sum(ServiceOrder.balance_due), 0)).where(
+                    ServiceOrder.balance_due > 0
+                )
             )
         ).scalar_one()
 
         low_stock = self.db.execute(
-            select(func.count(Part.id)).where(Part.stock_quantity <= Part.minimum_stock)
+            _part_filter(
+                select(func.count(Part.id)).where(Part.stock_quantity <= Part.minimum_stock)
+            )
         ).scalar_one()
 
         return DashboardSummary(
@@ -86,26 +114,37 @@ class DashboardService:
             waiting_authorization_count=waiting_auth,
         )
 
-    def get_income(self) -> IncomeReport:
+    def get_income(self, tenant_id: uuid.UUID | None = None) -> IncomeReport:
         today = date.today()
         month_start = today.replace(day=1)
         year_start = today.replace(month=1, day=1)
 
+        def _filter(stmt):
+            if tenant_id is not None:
+                stmt = stmt.where(Payment.tenant_id == tenant_id)
+            return stmt
+
         today_total = self.db.execute(
-            select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                func.date(Payment.payment_date) == today
+            _filter(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    func.date(Payment.payment_date) == today
+                )
             )
         ).scalar_one()
 
         month_total = self.db.execute(
-            select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                func.date(Payment.payment_date) >= month_start
+            _filter(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    func.date(Payment.payment_date) >= month_start
+                )
             )
         ).scalar_one()
 
         year_total = self.db.execute(
-            select(func.coalesce(func.sum(Payment.amount), 0)).where(
-                func.date(Payment.payment_date) >= year_start
+            _filter(
+                select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                    func.date(Payment.payment_date) >= year_start
+                )
             )
         ).scalar_one()
 
@@ -115,14 +154,18 @@ class DashboardService:
             year=Decimal(str(year_total)),
         )
 
-    def get_orders_by_status(self) -> list[OrderStatusCount]:
-        rows = self.db.execute(
-            select(ServiceOrder.status, func.count(ServiceOrder.id).label("count")).group_by(
-                ServiceOrder.status
-            )
-        ).all()
+    def get_orders_by_status(self, tenant_id: uuid.UUID | None = None) -> list[OrderStatusCount]:
+        stmt = select(ServiceOrder.status, func.count(ServiceOrder.id).label("count")).group_by(
+            ServiceOrder.status
+        )
+        if tenant_id is not None:
+            stmt = stmt.where(ServiceOrder.tenant_id == tenant_id)
+        rows = self.db.execute(stmt).all()
         return [OrderStatusCount(status=row.status, count=row.count) for row in rows]
 
-    def get_low_stock_parts(self) -> list[Part]:
-        stmt = select(Part).where(Part.stock_quantity <= Part.minimum_stock).order_by(Part.name)
+    def get_low_stock_parts(self, tenant_id: uuid.UUID | None = None) -> list[Part]:
+        stmt = select(Part).where(Part.stock_quantity <= Part.minimum_stock)
+        if tenant_id is not None:
+            stmt = stmt.where(Part.tenant_id == tenant_id)
+        stmt = stmt.order_by(Part.name)
         return list(self.db.execute(stmt).scalars().all())

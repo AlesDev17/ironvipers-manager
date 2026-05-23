@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.modules.users.schemas import UserCreate, UserResponse, UserUpdate
 from app.modules.users.service import UserService
-from app.shared.dependencies import require_admin
+from app.shared.dependencies import get_current_tenant_id, require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -17,8 +17,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 def list_users(
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).list_users()
+    return UserService(db).list_users(tenant_id)
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -26,8 +27,9 @@ def create_user(
     data: UserCreate,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).create_user(data)
+    return UserService(db).create_user(data, tenant_id)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -35,8 +37,9 @@ def get_user(
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).get_user(user_id)
+    return UserService(db).get_user(user_id, tenant_id)
 
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -45,8 +48,9 @@ def update_user(
     data: UserUpdate,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).update_user(user_id, data)
+    return UserService(db).update_user(user_id, data, tenant_id)
 
 
 @router.patch("/{user_id}/activate", response_model=UserResponse)
@@ -54,8 +58,9 @@ def activate_user(
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).activate_user(user_id)
+    return UserService(db).activate_user(user_id, tenant_id)
 
 
 @router.patch("/{user_id}/deactivate", response_model=UserResponse)
@@ -63,5 +68,6 @@ def deactivate_user(
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return UserService(db).deactivate_user(user_id)
+    return UserService(db).deactivate_user(user_id, tenant_id)
