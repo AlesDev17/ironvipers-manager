@@ -2,15 +2,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Part } from '../../types'
+import { toTitleCase, toSentenceCase } from '../../lib/strings'
 
 const partSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
-  sku: z.string().optional(),
+  name: z.string().min(1, 'El nombre es requerido').transform(toTitleCase),
+  sku: z.string().optional().transform((s) => s ? s.trim().toUpperCase() : s),
   sale_price: z.coerce.number().min(0, 'El precio de venta es requerido'),
   unit_cost: z.coerce.number().min(0).optional(),
   stock_quantity: z.coerce.number().int().min(0),
   minimum_stock: z.coerce.number().int().min(0).optional(),
-  description: z.string().optional(),
+  description: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
 })
 
 export type PartFormData = z.infer<typeof partSchema>

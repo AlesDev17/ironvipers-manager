@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { Client } from '../../types'
 import ClientForm, { ClientFormData } from './ClientForm'
@@ -35,6 +35,7 @@ function Modal({ title, onClose, children }: ModalProps) {
 
 export default function ClientsPage() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
@@ -125,8 +126,56 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {isLoading ? (
+          <LoadingSpinner size="md" className="py-12" />
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+            <p className="font-medium text-sm">
+              {search ? 'No se encontraron clientes con ese criterio.' : 'No hay clientes registrados aún.'}
+            </p>
+          </div>
+        ) : (
+          filtered.map((client) => (
+            <div
+              key={client.id}
+              onClick={() => navigate(`/clients/${client.id}`)}
+              className="card p-4 flex items-center gap-3 hover:bg-surface-700/60 active:bg-surface-700 transition-colors cursor-pointer"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-100 truncate">{client.full_name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {client.phone}{client.email ? ` · ${client.email}` : ''}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {new Date(client.created_at).toLocaleDateString('es-MX')}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingClient(client) }}
+                  className="btn-ghost"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(client) }}
+                  className="btn-danger-ghost"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
@@ -151,11 +200,16 @@ export default function ClientsPage() {
             </thead>
             <tbody>
               {filtered.map((client) => (
-                <tr key={client.id}>
+                <tr
+                  key={client.id}
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                  className="cursor-pointer hover:bg-surface-700/50 transition-colors"
+                >
                   <td>
                     <Link
                       to={`/clients/${client.id}`}
                       className="font-medium text-gray-100 hover:text-amber-400 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {client.full_name}
                     </Link>
@@ -167,10 +221,16 @@ export default function ClientsPage() {
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => setEditingClient(client)} className="btn-ghost">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingClient(client) }}
+                        className="btn-ghost"
+                      >
                         Editar
                       </button>
-                      <button onClick={() => handleDelete(client)} className="btn-danger-ghost">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(client) }}
+                        className="btn-danger-ghost"
+                      >
                         Eliminar
                       </button>
                     </div>

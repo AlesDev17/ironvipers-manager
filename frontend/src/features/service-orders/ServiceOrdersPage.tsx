@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { ServiceOrder, OrderStatus, Client, Motorcycle } from '../../types'
 import StatusBadge from '../../components/StatusBadge'
@@ -19,10 +19,9 @@ const ALL_STATUSES: OrderStatus[] = [
   'CANCELADA',
 ]
 
-function formatCurrency(value: string): string {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(
-    parseFloat(value)
-  )
+function formatCurrency(value: string | number): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(num)
 }
 
 interface ModalProps {
@@ -67,11 +66,14 @@ const statusLabels: Record<string, string> = {
 
 export default function ServiceOrdersPage() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const location = useLocation()
   const prefillMotorcycleId = (location.state as { prefill_motorcycle_id?: string } | null)
     ?.prefill_motorcycle_id
+  const prefillStatusFilter = (location.state as { statusFilter?: OrderStatus } | null)
+    ?.statusFilter
 
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>(prefillStatusFilter ?? 'ALL')
   const [showCreateModal, setShowCreateModal] = useState(!!prefillMotorcycleId)
 
   const { data: orders = [], isLoading } = useQuery({
@@ -122,6 +124,10 @@ export default function ServiceOrdersPage() {
 
   const filtered = orders.filter((o) => statusFilter === 'ALL' || o.status === statusFilter)
 
+  const totalCost = filtered.reduce((sum, o) => sum + parseFloat(o.total_cost), 0)
+  const totalPaid = filtered.reduce((sum, o) => sum + parseFloat(o.paid_amount), 0)
+  const totalDebt = filtered.reduce((sum, o) => sum + parseFloat(o.balance_due), 0)
+
   return (
     <div className="space-y-5 animate-fadeIn">
       {/* Filters + action */}
@@ -163,8 +169,69 @@ export default function ServiceOrdersPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* Financial summary */}
+      {!isLoading && filtered.length > 0 && (
+        <div className="card px-4 sm:px-6 py-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium mb-0.5">Total facturado</p>
+            <p className="text-lg font-bold text-white tabular-nums">{formatCurrency(totalCost)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-medium mb-0.5">Cobrado</p>
+            <p className="text-lg font-bold text-green-400 tabular-nums">{formatCurrency(totalPaid)}</p>
+          </div>
+          <div className="col-span-2 sm:col-span-1 border-t border-surface-600 sm:border-t-0 sm:border-l sm:border-surface-600 pt-3 sm:pt-0 sm:pl-4">
+            <p className="text-xs text-gray-500 uppercase font-medium mb-0.5">Por cobrar</p>
+            <p className={`text-lg font-bold tabular-nums ${totalDebt > 0 ? 'text-red-400' : 'text-green-400'}`}>
+              {formatCurrency(totalDebt)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {isLoading ? (
+          <LoadingSpinner size="md" className="py-12" />
+        ) : filtered.length === 0 ? (
+          <div className="card text-center py-16 text-gray-500">
+            <p className="font-medium text-sm">No hay órdenes con ese filtro.</p>
+          </div>
+        ) : (
+          filtered.map((order) => (
+            <Link
+              key={order.id}
+              to={`/service-orders/${order.id}`}
+              className="card p-4 flex items-center gap-3 hover:bg-surface-700/60 active:bg-surface-700 transition-colors"
+            >
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-xs text-gray-500">#{order.id.slice(0, 8)}</span>
+                  <StatusBadge status={order.status} />
+                </div>
+                <p className="text-sm font-medium text-gray-100 truncate">
+                  {clientMap.get(order.client_id) ?? '—'}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {motoMap.get(order.motorcycle_id) ?? '—'} · {new Date(order.entry_date).toLocaleDateString('es-MX')}
+                </p>
+                <div className="flex items-center gap-3 text-xs pt-0.5">
+                  <span className="text-gray-400">Total: <span className="text-gray-100 font-medium">{formatCurrency(order.total_cost)}</span></span>
+                  <span className={parseFloat(order.balance_due) > 0 ? 'text-red-400 font-medium' : 'text-green-400'}>
+                    Saldo: {formatCurrency(order.balance_due)}
+                  </span>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-600 flex-shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </Link>
+          ))
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
@@ -185,12 +252,15 @@ export default function ServiceOrdersPage() {
                 <th>Entrada</th>
                 <th>Total</th>
                 <th>Saldo</th>
-                <th />
               </tr>
             </thead>
             <tbody>
               {filtered.map((order) => (
-                <tr key={order.id}>
+                <tr
+                  key={order.id}
+                  onClick={() => navigate(`/service-orders/${order.id}`)}
+                  className="cursor-pointer hover:bg-surface-700/50 transition-colors"
+                >
                   <td className="font-mono text-gray-500 text-xs">#{order.id.slice(0, 8)}</td>
                   <td className="text-gray-300">{clientMap.get(order.client_id) ?? '—'}</td>
                   <td className="text-gray-300">{motoMap.get(order.motorcycle_id) ?? '—'}</td>
@@ -201,14 +271,6 @@ export default function ServiceOrdersPage() {
                     <span className={parseFloat(order.balance_due) > 0 ? 'text-red-400 font-medium' : 'text-green-400'}>
                       {formatCurrency(order.balance_due)}
                     </span>
-                  </td>
-                  <td className="text-right">
-                    <Link
-                      to={`/service-orders/${order.id}`}
-                      className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors"
-                    >
-                      Ver →
-                    </Link>
                   </td>
                 </tr>
               ))}

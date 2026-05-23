@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import api from '../../lib/api'
 import { DashboardSummary } from '../../types'
 import LoadingSpinner from '../../components/LoadingSpinner'
@@ -14,11 +15,13 @@ interface StatCardProps {
   icon: React.ReactNode
   accentColor: string
   subtext?: string
+  to?: string
+  toState?: object
 }
 
-function StatCard({ label, value, icon, accentColor, subtext }: StatCardProps) {
-  return (
-    <div className="card p-5 flex items-start gap-4 hover:-translate-y-0.5 transition-all duration-200 group">
+function StatCard({ label, value, icon, accentColor, subtext, to, toState }: StatCardProps) {
+  const inner = (
+    <>
       <div className={`flex-shrink-0 h-12 w-12 rounded-xl flex items-center justify-center ${accentColor} transition-transform duration-200 group-hover:scale-105`}>
         {icon}
       </div>
@@ -27,6 +30,29 @@ function StatCard({ label, value, icon, accentColor, subtext }: StatCardProps) {
         <p className="text-2xl font-bold text-white mt-0.5 tabular-nums">{value}</p>
         {subtext && <p className="text-xs text-gray-500 mt-1">{subtext}</p>}
       </div>
+      {to && (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-600 flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      )}
+    </>
+  )
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        state={toState}
+        className="card p-5 flex items-start gap-4 hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+      >
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="card p-5 flex items-start gap-4 hover:-translate-y-0.5 transition-all duration-200 group">
+      {inner}
     </div>
   )
 }
@@ -118,42 +144,52 @@ export default function DashboardPage() {
           value={data.active_orders}
           icon={iconWrench}
           accentColor="bg-blue-500/10"
+          to="/service-orders"
         />
         <StatCard
           label="Motos en Reparación"
           value={data.motorcycles_in_repair}
           icon={iconMoto}
           accentColor="bg-indigo-500/10"
+          to="/service-orders"
+          toState={{ statusFilter: 'EN_REPARACION' }}
         />
         <StatCard
           label="Esp. Autorización"
           value={data.waiting_authorization_count}
           icon={iconClock}
           accentColor="bg-orange-500/10"
+          to="/service-orders"
+          toState={{ statusFilter: 'ESPERANDO_AUTORIZACION' }}
         />
         <StatCard
           label="Órdenes Completadas"
           value={data.completed_orders}
           icon={iconCheck}
           accentColor="bg-green-500/10"
+          to="/service-orders"
+          toState={{ statusFilter: 'ENTREGADA' }}
         />
         <StatCard
           label="Ingresos del Día"
           value={formatCurrency(data.todays_income)}
           icon={iconCash}
           accentColor="bg-emerald-500/10"
+          to="/service-orders"
         />
         <StatCard
           label="Ingresos del Mes"
           value={formatCurrency(data.monthly_income)}
           icon={iconTrend}
           accentColor="bg-amber-500/10"
+          to="/service-orders"
         />
         <StatCard
           label="Pagos Pendientes"
           value={formatCurrency(data.pending_payments_total)}
           icon={iconCard}
           accentColor="bg-yellow-500/10"
+          to="/service-orders"
         />
         <StatCard
           label="Piezas Bajo Stock"
@@ -161,6 +197,7 @@ export default function DashboardPage() {
           icon={iconWarning}
           accentColor="bg-red-500/10"
           subtext={data.low_stock_parts > 0 ? 'Requiere atención' : 'Stock OK'}
+          to="/parts"
         />
       </div>
 
