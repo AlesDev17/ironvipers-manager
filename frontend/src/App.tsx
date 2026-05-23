@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './features/auth/useAuth'
 import ProtectedRoute from './components/ProtectedRoute'
+import SuperadminRoute from './components/SuperadminRoute'
 import Layout from './components/Layout'
 import LoginPage from './features/auth/LoginPage'
 import DashboardPage from './features/dashboard/DashboardPage'
@@ -12,6 +13,7 @@ import ServiceOrdersPage from './features/service-orders/ServiceOrdersPage'
 import ServiceOrderDetailPage from './features/service-orders/ServiceOrderDetailPage'
 import PartsPage from './features/parts/PartsPage'
 import ExpensesPage from './features/expenses/ExpensesPage'
+import TenantsPage from './features/superadmin/TenantsPage'
 
 export default function App() {
   return (
@@ -30,6 +32,9 @@ export default function App() {
             <Route path="/service-orders/:id" element={<ServiceOrderDetailPage />} />
             <Route path="/parts" element={<PartsPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
+            <Route element={<SuperadminRoute />}>
+              <Route path="/superadmin/tenants" element={<TenantsPage />} />
+            </Route>
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

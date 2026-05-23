@@ -15,16 +15,18 @@ class MotorcycleRepository:
     def get_by_id(self, motorcycle_id: uuid.UUID) -> Motorcycle | None:
         return self.db.get(Motorcycle, motorcycle_id)
 
-    def list_all(self) -> list[Motorcycle]:
-        stmt = select(Motorcycle).order_by(Motorcycle.created_at.desc())
+    def list_all(self, tenant_id: uuid.UUID | None = None) -> list[Motorcycle]:
+        stmt = select(Motorcycle)
+        if tenant_id is not None:
+            stmt = stmt.where(Motorcycle.tenant_id == tenant_id)
+        stmt = stmt.order_by(Motorcycle.created_at.desc())
         return list(self.db.execute(stmt).scalars().all())
 
-    def list_by_client(self, client_id: uuid.UUID) -> list[Motorcycle]:
-        stmt = (
-            select(Motorcycle)
-            .where(Motorcycle.client_id == client_id)
-            .order_by(Motorcycle.created_at.desc())
-        )
+    def list_by_client(self, client_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> list[Motorcycle]:
+        stmt = select(Motorcycle).where(Motorcycle.client_id == client_id)
+        if tenant_id is not None:
+            stmt = stmt.where(Motorcycle.tenant_id == tenant_id)
+        stmt = stmt.order_by(Motorcycle.created_at.desc())
         return list(self.db.execute(stmt).scalars().all())
 
     def create(self, motorcycle: Motorcycle) -> Motorcycle:

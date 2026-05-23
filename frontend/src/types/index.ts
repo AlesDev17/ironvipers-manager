@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'MECHANIC'
+export type UserRole = 'ADMIN' | 'MECHANIC' | 'SUPERADMIN'
 
 export type OrderStatus =
   | 'RECIBIDA'
@@ -22,6 +22,7 @@ export interface User {
   phone?: string
   role: UserRole
   is_active: boolean
+  tenant_name?: string | null
   created_at: string
 }
 
@@ -148,4 +149,19 @@ export interface PaginatedResponse<T> {
   total: number
   page: number
   size: number
+}
+
+export interface Tenant {
+  id: string
+  name: string
+  owner_email: string
+  is_active: boolean
+  subscription_expires_at: string | null
+  created_at: string
+}
+
+export interface TenantWithAdmin {
+  tenant: Tenant
+  admin_email: string
+  admin_temp_password: string
 }

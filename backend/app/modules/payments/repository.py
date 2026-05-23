@@ -15,8 +15,11 @@ class PaymentRepository:
     def get_by_id(self, payment_id: uuid.UUID) -> Payment | None:
         return self.db.get(Payment, payment_id)
 
-    def list_all(self) -> list[Payment]:
-        stmt = select(Payment).order_by(Payment.payment_date.desc())
+    def list_all(self, tenant_id: uuid.UUID | None = None) -> list[Payment]:
+        stmt = select(Payment)
+        if tenant_id is not None:
+            stmt = stmt.where(Payment.tenant_id == tenant_id)
+        stmt = stmt.order_by(Payment.payment_date.desc())
         return list(self.db.execute(stmt).scalars().all())
 
     def list_by_order(self, service_order_id: uuid.UUID) -> list[Payment]:

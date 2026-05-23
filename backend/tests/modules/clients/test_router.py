@@ -14,7 +14,7 @@ CLIENT_PAYLOAD = {
 
 
 def test_create_client(client: TestClient, auth_headers: dict):
-    response = client.post("/api/v1/clients/", json=CLIENT_PAYLOAD, headers=auth_headers)
+    response = client.post("/api/v1/clients", json=CLIENT_PAYLOAD, headers=auth_headers)
     assert response.status_code == 201
     data = response.json()
     assert data["full_name"] == CLIENT_PAYLOAD["full_name"]
@@ -24,7 +24,7 @@ def test_create_client(client: TestClient, auth_headers: dict):
 
 def test_get_client(client: TestClient, auth_headers: dict):
     create_response = client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={**CLIENT_PAYLOAD, "email": "get_client@example.com"},
         headers=auth_headers,
     )
@@ -45,14 +45,14 @@ def test_get_client_not_found(client: TestClient, auth_headers: dict):
 
 
 def test_list_clients(client: TestClient, auth_headers: dict):
-    response = client.get("/api/v1/clients/", headers=auth_headers)
+    response = client.get("/api/v1/clients", headers=auth_headers)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_update_client(client: TestClient, auth_headers: dict):
     create_response = client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={**CLIENT_PAYLOAD, "email": "update_client@example.com"},
         headers=auth_headers,
     )
@@ -72,7 +72,7 @@ def test_update_client(client: TestClient, auth_headers: dict):
 
 def test_delete_client(client: TestClient, auth_headers: dict):
     create_response = client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={**CLIENT_PAYLOAD, "email": "delete_client@example.com"},
         headers=auth_headers,
     )
@@ -87,5 +87,5 @@ def test_delete_client(client: TestClient, auth_headers: dict):
 
 
 def test_list_clients_unauthenticated(client: TestClient):
-    response = client.get("/api/v1/clients/")
+    response = client.get("/api/v1/clients")
     assert response.status_code == 401

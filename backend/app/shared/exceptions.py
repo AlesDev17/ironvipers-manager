@@ -17,10 +17,10 @@ def conflict(msg: str) -> HTTPException:
     )
 
 
-def forbidden() -> HTTPException:
+def forbidden(detail: str = "You do not have permission to perform this action") -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="You do not have permission to perform this action",
+        detail=detail,
     )
 
 

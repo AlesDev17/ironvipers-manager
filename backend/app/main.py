@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.modules.auth.router import router as auth_router
+from app.modules.tenants.router import router as tenants_router
 from app.modules.clients.router import router as clients_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.expenses.router import router as expenses_router
@@ -28,6 +29,7 @@ app.add_middleware(
 _PREFIX = "/api/v1"
 
 app.include_router(auth_router, prefix=_PREFIX)
+app.include_router(tenants_router, prefix=_PREFIX)
 app.include_router(users_router, prefix=_PREFIX)
 app.include_router(clients_router, prefix=_PREFIX)
 app.include_router(motorcycles_router, prefix=_PREFIX)

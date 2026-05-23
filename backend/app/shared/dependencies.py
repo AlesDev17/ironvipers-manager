@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import uuid
+from datetime import datetime, timezone
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -28,16 +31,40 @@ def get_current_user(
     if user is None or not user.is_active:
         raise unauthorized()
 
+    # Enforce tenant subscription on every request (not just login)
+    if user.role != UserRole.SUPERADMIN and user.tenant:
+        if not user.tenant.is_active:
+            raise forbidden("subscription_inactive")
+        if user.tenant.subscription_expires_at:
+            if user.tenant.subscription_expires_at < datetime.now(timezone.utc):
+                raise forbidden("subscription_expired")
+
     return user
 
 
+def require_superadmin(current_user=Depends(get_current_user)):
+    if current_user.role != UserRole.SUPERADMIN:
+        raise forbidden()
+    return current_user
+
+
 def require_admin(current_user=Depends(get_current_user)):
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role not in (UserRole.ADMIN, UserRole.SUPERADMIN):
         raise forbidden()
     return current_user
 
 
 def require_mechanic_or_admin(current_user=Depends(get_current_user)):
-    if current_user.role not in (UserRole.ADMIN, UserRole.MECHANIC):
+    if current_user.role not in (UserRole.ADMIN, UserRole.MECHANIC, UserRole.SUPERADMIN):
         raise forbidden()
     return current_user
+
+
+def get_current_tenant_id(current_user=Depends(get_current_user)) -> uuid.UUID | None:
+    """Returns the tenant_id of the logged-in user. None for SUPERADMIN (sees all data).
+    Non-SUPERADMIN users without a tenant are blocked."""
+    if current_user.role == UserRole.SUPERADMIN:
+        return None
+    if current_user.tenant_id is None:
+        raise forbidden("Account is not assigned to a workshop")
+    return current_user.tenant_id

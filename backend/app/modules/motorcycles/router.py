@@ -12,7 +12,7 @@ from app.modules.motorcycles.schemas import (
     MotorcycleUpdate,
 )
 from app.modules.motorcycles.service import MotorcycleService
-from app.shared.dependencies import get_current_user, require_admin
+from app.shared.dependencies import get_current_tenant_id, require_admin
 
 router = APIRouter(prefix="/motorcycles", tags=["motorcycles"])
 
@@ -20,36 +20,36 @@ router = APIRouter(prefix="/motorcycles", tags=["motorcycles"])
 @router.get("", response_model=list[MotorcycleResponse])
 def list_motorcycles(
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return MotorcycleService(db).list_motorcycles()
+    return MotorcycleService(db).list_motorcycles(tenant_id)
 
 
 @router.post("", response_model=MotorcycleResponse, status_code=status.HTTP_201_CREATED)
 def create_motorcycle(
     data: MotorcycleCreate,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return MotorcycleService(db).create_motorcycle(data)
+    return MotorcycleService(db).create_motorcycle(data, tenant_id)
 
 
 @router.get("/by-client/{client_id}", response_model=list[MotorcycleResponse])
 def list_by_client(
     client_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return MotorcycleService(db).list_by_client(client_id)
+    return MotorcycleService(db).list_by_client(client_id, tenant_id)
 
 
 @router.get("/{motorcycle_id}", response_model=MotorcycleResponse)
 def get_motorcycle(
     motorcycle_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return MotorcycleService(db).get_motorcycle(motorcycle_id)
+    return MotorcycleService(db).get_motorcycle(motorcycle_id, tenant_id)
 
 
 @router.put("/{motorcycle_id}", response_model=MotorcycleResponse)
@@ -57,9 +57,9 @@ def update_motorcycle(
     motorcycle_id: uuid.UUID,
     data: MotorcycleUpdate,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return MotorcycleService(db).update_motorcycle(motorcycle_id, data)
+    return MotorcycleService(db).update_motorcycle(motorcycle_id, data, tenant_id)
 
 
 @router.delete("/{motorcycle_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -67,5 +67,6 @@ def delete_motorcycle(
     motorcycle_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    MotorcycleService(db).delete_motorcycle(motorcycle_id)
+    MotorcycleService(db).delete_motorcycle(motorcycle_id, tenant_id)

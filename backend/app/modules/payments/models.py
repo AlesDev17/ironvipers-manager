@@ -14,6 +14,9 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True
+    )
     service_order_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("service_orders.id", ondelete="CASCADE"), nullable=False
     )

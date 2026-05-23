@@ -15,20 +15,23 @@ class UserService:
     def __init__(self, db: Session) -> None:
         self.repo = UserRepository(db)
 
-    def list_users(self) -> list[User]:
-        return self.repo.list_all()
+    def list_users(self, tenant_id: uuid.UUID | None = None) -> list[User]:
+        return self.repo.list_all(tenant_id)
 
-    def get_user(self, user_id: uuid.UUID) -> User:
+    def get_user(self, user_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> User:
         user = self.repo.get_by_id(user_id)
         if not user:
             raise not_found("User")
+        if tenant_id is not None and user.tenant_id != tenant_id:
+            raise not_found("User")
         return user
 
-    def create_user(self, data: UserCreate) -> User:
+    def create_user(self, data: UserCreate, tenant_id: uuid.UUID | None = None) -> User:
         existing = self.repo.get_by_email(data.email)
         if existing:
             raise conflict("A user with this email already exists")
         user = User(
+            tenant_id=tenant_id,
             full_name=data.full_name,
             email=data.email,
             phone=data.phone,
@@ -37,8 +40,8 @@ class UserService:
         )
         return self.repo.create(user)
 
-    def update_user(self, user_id: uuid.UUID, data: UserUpdate) -> User:
-        user = self.get_user(user_id)
+    def update_user(self, user_id: uuid.UUID, data: UserUpdate, tenant_id: uuid.UUID | None = None) -> User:
+        user = self.get_user(user_id, tenant_id)
         if data.email is not None and data.email != user.email:
             existing = self.repo.get_by_email(data.email)
             if existing:
@@ -47,12 +50,12 @@ class UserService:
             setattr(user, field, value)
         return self.repo.update(user)
 
-    def activate_user(self, user_id: uuid.UUID) -> User:
-        user = self.get_user(user_id)
+    def activate_user(self, user_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> User:
+        user = self.get_user(user_id, tenant_id)
         user.is_active = True
         return self.repo.update(user)
 
-    def deactivate_user(self, user_id: uuid.UUID) -> User:
-        user = self.get_user(user_id)
+    def deactivate_user(self, user_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> User:
+        user = self.get_user(user_id, tenant_id)
         user.is_active = False
         return self.repo.update(user)

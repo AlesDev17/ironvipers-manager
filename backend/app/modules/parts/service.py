@@ -15,27 +15,29 @@ class PartService:
     def __init__(self, db: Session) -> None:
         self.repo = PartRepository(db)
 
-    def list_parts(self) -> list[Part]:
-        return self.repo.list_all()
+    def list_parts(self, tenant_id: uuid.UUID | None = None) -> list[Part]:
+        return self.repo.list_all(tenant_id)
 
-    def get_part(self, part_id: uuid.UUID) -> Part:
+    def get_part(self, part_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> Part:
         part = self.repo.get_by_id(part_id)
         if not part:
             raise not_found("Part")
+        if tenant_id is not None and part.tenant_id != tenant_id:
+            raise not_found("Part")
         return part
 
-    def create_part(self, data: PartCreate) -> Part:
-        part = Part(**data.model_dump())
+    def create_part(self, data: PartCreate, tenant_id: uuid.UUID | None = None) -> Part:
+        part = Part(**data.model_dump(), tenant_id=tenant_id)
         return self.repo.create(part)
 
-    def update_part(self, part_id: uuid.UUID, data: PartUpdate) -> Part:
-        part = self.get_part(part_id)
+    def update_part(self, part_id: uuid.UUID, data: PartUpdate, tenant_id: uuid.UUID | None = None) -> Part:
+        part = self.get_part(part_id, tenant_id)
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(part, field, value)
         return self.repo.update(part)
 
-    def delete_part(self, part_id: uuid.UUID) -> None:
-        part = self.get_part(part_id)
+    def delete_part(self, part_id: uuid.UUID, tenant_id: uuid.UUID | None = None) -> None:
+        part = self.get_part(part_id, tenant_id)
         self.repo.delete(part)
 
     def list_parts_by_order(self, order_id: uuid.UUID, db: Session) -> list[ServiceOrderPart]:
@@ -43,7 +45,7 @@ class PartService:
         return sop_repo.list_by_order(order_id)
 
     def add_part_to_order(
-        self, order_id: uuid.UUID, data: AddPartToOrder, db: Session
+        self, order_id: uuid.UUID, data: AddPartToOrder, db: Session, tenant_id: uuid.UUID | None = None
     ) -> ServiceOrderPart:
         part_repo = PartRepository(db)
         sop_repo = ServiceOrderPartRepository(db)
@@ -52,9 +54,13 @@ class PartService:
         part = part_repo.get_by_id(data.part_id)
         if not part:
             raise not_found("Part")
+        if tenant_id is not None and part.tenant_id != tenant_id:
+            raise not_found("Part")
 
         order = order_repo.get_by_id(order_id)
         if not order:
+            raise not_found("ServiceOrder")
+        if tenant_id is not None and order.tenant_id != tenant_id:
             raise not_found("ServiceOrder")
 
         if part.stock_quantity < data.quantity:

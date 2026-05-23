@@ -14,7 +14,7 @@ from app.modules.parts.schemas import (
     ServiceOrderPartResponse,
 )
 from app.modules.parts.service import PartService
-from app.shared.dependencies import get_current_user, require_admin
+from app.shared.dependencies import get_current_tenant_id, require_admin
 
 parts_router = APIRouter(prefix="/parts", tags=["parts"])
 order_parts_router = APIRouter(prefix="/service-orders", tags=["parts"])
@@ -23,9 +23,9 @@ order_parts_router = APIRouter(prefix="/service-orders", tags=["parts"])
 @parts_router.get("", response_model=list[PartResponse])
 def list_parts(
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return PartService(db).list_parts()
+    return PartService(db).list_parts(tenant_id)
 
 
 @parts_router.post("", response_model=PartResponse, status_code=status.HTTP_201_CREATED)
@@ -33,17 +33,18 @@ def create_part(
     data: PartCreate,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return PartService(db).create_part(data)
+    return PartService(db).create_part(data, tenant_id)
 
 
 @parts_router.get("/{part_id}", response_model=PartResponse)
 def get_part(
     part_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return PartService(db).get_part(part_id)
+    return PartService(db).get_part(part_id, tenant_id)
 
 
 @parts_router.put("/{part_id}", response_model=PartResponse)
@@ -52,8 +53,9 @@ def update_part(
     data: PartUpdate,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return PartService(db).update_part(part_id, data)
+    return PartService(db).update_part(part_id, data, tenant_id)
 
 
 @parts_router.delete("/{part_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -61,15 +63,16 @@ def delete_part(
     part_id: uuid.UUID,
     db: Session = Depends(get_db),
     _: object = Depends(require_admin),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    PartService(db).delete_part(part_id)
+    PartService(db).delete_part(part_id, tenant_id)
 
 
 @order_parts_router.get("/{order_id}/parts", response_model=list[ServiceOrderPartResponse])
 def list_parts_by_order(
     order_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
     return PartService(db).list_parts_by_order(order_id, db)
 
@@ -83,6 +86,6 @@ def add_part_to_order(
     order_id: uuid.UUID,
     data: AddPartToOrder,
     db: Session = Depends(get_db),
-    _: object = Depends(get_current_user),
+    tenant_id: uuid.UUID | None = Depends(get_current_tenant_id),
 ):
-    return PartService(db).add_part_to_order(order_id, data, db)
+    return PartService(db).add_part_to_order(order_id, data, db, tenant_id)
