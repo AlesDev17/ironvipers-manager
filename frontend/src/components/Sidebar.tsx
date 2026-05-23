@@ -1,6 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../features/auth/useAuth'
 
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
 // Inline SVG icons (Heroicons style)
 const icons = {
   dashboard: (
@@ -55,7 +60,7 @@ const navItems: NavItem[] = [
   { to: '/expenses', label: 'Gastos', icon: 'expenses' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
 
   const initials = user?.full_name
@@ -66,7 +71,10 @@ export default function Sidebar() {
     .toUpperCase() ?? 'U'
 
   return (
-    <aside className="w-64 bg-surface-800 border-r border-surface-600 flex flex-col h-full fixed left-0 top-0 bottom-0">
+    <aside
+      className={`w-64 bg-surface-800 border-r border-surface-600 flex flex-col h-full fixed left-0 top-0 bottom-0 z-50 transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+    >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-surface-600">
         <div className="h-9 w-9 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
@@ -86,6 +94,7 @@ export default function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               `group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive
@@ -120,6 +129,9 @@ export default function Sidebar() {
           {icons.logout}
           Cerrar sesión
         </button>
+        <p className="text-center text-gray-600 text-xs mt-2 select-none">
+          v{__APP_VERSION__}
+        </p>
       </div>
     </aside>
   )

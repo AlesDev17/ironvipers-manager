@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '../../lib/api'
+import { toSentenceCase } from '../../lib/strings'
 import {
   ServiceOrder,
   OrderStatus,
@@ -79,8 +80,8 @@ const paymentSchema = z.object({
 type PaymentFormData = z.infer<typeof paymentSchema>
 
 const orderTextSchema = z.object({
-  diagnosis: z.string().optional(),
-  work_performed: z.string().optional(),
+  diagnosis: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
+  work_performed: z.string().optional().transform((s) => s ? toSentenceCase(s) : s),
   labor_cost: z.coerce.number().min(0),
 })
 type OrderTextFormData = z.infer<typeof orderTextSchema>
@@ -98,7 +99,7 @@ function SectionCard({ title, children, action }: { title: string; children: Rea
         <h3 className="text-base font-semibold text-white">{title}</h3>
         {action}
       </div>
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-4 sm:px-6 py-4 sm:py-5">{children}</div>
     </div>
   )
 }
@@ -343,7 +344,7 @@ export default function ServiceOrderDetailPage() {
 
       {/* Header card */}
       <div className="card overflow-hidden">
-        <div className="px-6 py-5 bg-gradient-to-r from-surface-700 to-surface-800 border-b border-surface-600">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-surface-700 to-surface-800 border-b border-surface-600">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
@@ -441,7 +442,7 @@ export default function ServiceOrderDetailPage() {
         </div>
 
         {/* Status stepper */}
-        <div className="px-6 py-4 overflow-x-auto">
+        <div className="px-4 sm:px-6 py-4 overflow-x-auto">
           <StatusStepper current={order.status} />
         </div>
       </div>
@@ -474,7 +475,7 @@ export default function ServiceOrderDetailPage() {
               placeholder="Describe los trabajos realizados..."
             />
           </div>
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
             <div className="flex-1">
               <label className="label-dark">Costo de mano de obra ($)</label>
               <input
@@ -488,7 +489,7 @@ export default function ServiceOrderDetailPage() {
             <button
               type="submit"
               disabled={updateTextMutation.isPending}
-              className="btn-primary flex-shrink-0"
+              className="btn-primary sm:flex-shrink-0 w-full sm:w-auto"
             >
               {updateTextMutation.isPending ? (
                 <>
@@ -509,26 +510,30 @@ export default function ServiceOrderDetailPage() {
           {orderParts.length === 0 ? (
             <p className="text-sm text-gray-500">No hay piezas registradas para esta orden.</p>
           ) : (
-            <table className="table-dark">
-              <thead>
-                <tr>
-                  <th>Pieza</th>
-                  <th className="text-right">Cantidad</th>
-                  <th className="text-right">P. Unitario</th>
-                  <th className="text-right">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderParts.map((op) => (
-                  <tr key={op.id}>
-                    <td className="text-gray-100">{op.part?.name ?? op.part_id}</td>
-                    <td className="text-gray-400 text-right">{op.quantity}</td>
-                    <td className="text-gray-400 text-right">{formatCurrency(op.unit_price)}</td>
-                    <td className="text-gray-100 font-medium text-right">{formatCurrency(op.total_price)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto -mx-4 sm:-mx-6">
+              <div className="min-w-full px-4 sm:px-6">
+                <table className="table-dark">
+                  <thead>
+                    <tr>
+                      <th>Pieza</th>
+                      <th className="text-right">Cant.</th>
+                      <th className="text-right">P. Unit.</th>
+                      <th className="text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderParts.map((op) => (
+                      <tr key={op.id}>
+                        <td className="text-gray-100">{op.part?.name ?? op.part_id}</td>
+                        <td className="text-gray-400 text-right">{op.quantity}</td>
+                        <td className="text-gray-400 text-right">{formatCurrency(op.unit_price)}</td>
+                        <td className="text-gray-100 font-medium text-right">{formatCurrency(op.total_price)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {!showPartForm ? (
@@ -546,7 +551,7 @@ export default function ServiceOrderDetailPage() {
               onSubmit={partForm.handleSubmit((d) => addPartMutation.mutateAsync(d))}
               className="border border-surface-600 rounded-xl p-4 space-y-3 bg-surface-700/40"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label-dark text-xs">Pieza</label>
                   <select {...partForm.register('part_id')} className="select-dark">
@@ -590,30 +595,34 @@ export default function ServiceOrderDetailPage() {
           {payments.length === 0 ? (
             <p className="text-sm text-gray-500">No hay pagos registrados.</p>
           ) : (
-            <table className="table-dark">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Método</th>
-                  <th className="text-right">Monto</th>
-                  <th>Notas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id}>
-                    <td className="text-gray-400">{new Date(p.payment_date).toLocaleDateString('es-MX')}</td>
-                    <td>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-700 text-gray-300 border border-surface-600">
-                        {p.payment_method}
-                      </span>
-                    </td>
-                    <td className="text-gray-100 font-medium text-right">{formatCurrency(p.amount)}</td>
-                    <td className="text-gray-500 text-xs">{p.notes ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto -mx-4 sm:-mx-6">
+              <div className="min-w-full px-4 sm:px-6">
+                <table className="table-dark">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Método</th>
+                      <th className="text-right">Monto</th>
+                      <th>Notas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="text-gray-400">{new Date(p.payment_date).toLocaleDateString('es-MX')}</td>
+                        <td>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-700 text-gray-300 border border-surface-600">
+                            {p.payment_method}
+                          </span>
+                        </td>
+                        <td className="text-gray-100 font-medium text-right">{formatCurrency(p.amount)}</td>
+                        <td className="text-gray-500 text-xs">{p.notes ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {!showPaymentForm ? (
@@ -631,7 +640,7 @@ export default function ServiceOrderDetailPage() {
               onSubmit={paymentForm.handleSubmit((d) => addPaymentMutation.mutateAsync(d))}
               className="border border-surface-600 rounded-xl p-4 space-y-3 bg-surface-700/40"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label-dark text-xs">Monto ($)</label>
                   <input
@@ -704,7 +713,7 @@ export default function ServiceOrderDetailPage() {
       {/* Cost summary */}
       <div className="card p-6">
         <h3 className="text-base font-semibold text-white mb-5">Resumen de Costos</h3>
-        <div className="space-y-2.5 max-w-xs ml-auto">
+        <div className="space-y-2.5 w-full sm:max-w-xs sm:ml-auto">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Mano de obra</span>
             <span className="text-gray-100 font-medium tabular-nums">{formatCurrency(order.labor_cost)}</span>

@@ -141,8 +141,56 @@ export default function PartsPage() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {isLoading ? (
+          <LoadingSpinner size="md" className="py-12" />
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-12 h-12 mx-auto mb-3 text-gray-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077l1.41-.513m14.095-5.13l1.41-.513M5.106 17.785l1.15-.964m11.49-9.642l1.149-.964M7.501 19.795l.75-1.3m7.5-12.99l.75-1.3m-6.063 16.658l.26-1.477m2.605-14.772l.26-1.477m0 17.726l-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205L12 12m6.894 5.785l-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864l-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
+            </svg>
+            <p className="font-medium text-sm">{search ? 'No se encontraron piezas.' : 'No hay piezas registradas.'}</p>
+          </div>
+        ) : (
+          filtered.map((part) => {
+            const isLow =
+              part.minimum_stock != null && part.stock_quantity <= part.minimum_stock
+            return (
+              <div
+                key={part.id}
+                onClick={() => setEditingPart(part)}
+                className="card p-4 flex items-center gap-3 hover:bg-surface-700/60 active:bg-surface-700 transition-colors cursor-pointer"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-100 truncate">{part.name}</span>
+                    {isLow && <span className="text-xs text-red-400 flex-shrink-0">&#9888; Bajo stock</span>}
+                  </div>
+                  <div className="font-mono text-xs text-gray-500 mt-0.5">{part.sku ?? 'Sin SKU'}</div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                    <span>Precio: {formatCurrency(part.sale_price)}</span>
+                    <span className={isLow ? 'text-red-400' : ''}>
+                      Stock: {part.stock_quantity}{part.minimum_stock != null ? `/${part.minimum_stock}` : ''}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(part) }}
+                    className="btn-danger-ghost"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block card overflow-hidden">
         {isLoading ? (
           <LoadingSpinner size="md" className="py-12" />
         ) : filtered.length === 0 ? (
